@@ -1,0 +1,10 @@
+Rule_1: 
+Format: commit -m 'date_name_message' (example: '20231120_bmy_test')
+Note: Please use eight digits for the date, abbreviate and lowercase the initials for the name, and keep the content in lowercase.
+备注：日期请使用八个数字，姓名采用首字母缩写并小写，内容全部小写。
+
+Rule_2: 
+In variable names, file names, and other code, use lowercase letters exclusively and separate segments with "_". For downloaded files, retain the original names.
+在变量名，文件名等其他代码中，命名全部使用小写字母，使用"_"进行分段。对于下载的文件，保留原始名称。
+
+Rule_3: 
