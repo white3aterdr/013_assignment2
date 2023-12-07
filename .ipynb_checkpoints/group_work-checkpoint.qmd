@@ -124,15 +124,6 @@ A parenthetical citation: There are many ways to research Airbnb [see, for examp
 
 :::
 
-```{python}
-print(f"Data frame is {df.shape[0]:,} x {df.shape[1]:,}")
-```
-
-```{python}
-ax = df.host_listings_count.plot.hist(bins=50);
-ax.set_xlim([0,500]);
-```
-
 ## 3. How was the data collected?  
 
 ::: {.duedate}
