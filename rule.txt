@@ -1,10 +1,9 @@
 Rule_1: 
 Format: commit -m 'name_message' (example: 'bmy_First test')
 Note: Please use abbreviate and lowercase the initials for the name.
-备注：姓名采用首字母缩写并小写。
 
 Rule_2: 
 In variable names, file names, and other code, use lowercase letters exclusively and separate segments with "_". For downloaded files, retain the original names.
-在变量名，文件名等其他代码中，命名全部使用小写字母，使用"_"进行分段。对于下载的文件，保留原始名称。
 
 Rule_3: 
+(Add any new rule you think is useful.)
