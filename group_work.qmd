@@ -94,16 +94,14 @@ import pandas as pd
 ```
 
 ```{python}
-host = 'https://orca.casa.ucl.ac.uk'
-path = '~jreades/data'
-file = '2022-09-10-listings.csv.gz'
-url  = f'{host}/{path}/{file}'
+file = '20230918_listings.csv.gz'
+url = 'https://github.com/white3aterdr/013_assignment2/raw/main/20230918_listings.csv.gz'
 
 if os.path.exists(file):
-  df = pd.read_csv(file, compression='gzip', low_memory=False)
+    df = pd.read_csv(file, compression='gzip', low_memory=False)
 else: 
-  df = pd.read_csv(url, compression='gzip', low_memory=False)
-  df.to_csv(file)
+    df = pd.read_csv(url, compression='gzip', low_memory=False)
+    df.to_csv(file)
 ```
 
 ## 1. Who collected the data?
