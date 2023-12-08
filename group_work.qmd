@@ -96,14 +96,14 @@ import pandas as pd
 ```
 
 ```{python}
-file_gz = '20230918_listings.csv.gz'
-url_gz = 'https://github.com/white3aterdr/013_assignment2/raw/main/20230918_listings.csv.gz'
+file_gz = 'listings.csv.gz'
+url_gz = 'https://github.com/white3aterdr/013_assignment2/raw/main/listings.csv.gz'
 
 if os.path.exists(file_gz):
-    df = pd.read_csv(file_gz, compression='gzip', low_memory=False)
+    data = pd.read_csv(file_gz, compression='gzip', encoding='ISO-8859-1', dtype={68: str}, low_memory=False)
 else: 
-    df = pd.read_csv(url_gz, compression='gzip', low_memory=False)
-    df.to_csv(file_gz)
+    data = pd.read_csv(url_gz, compression='gzip', encoding='ISO-8859-1', dtype={68: str}, low_memory=False)
+    data.to_csv(file_gz)
 
 
 file_bib = "bio.bib"
@@ -216,6 +216,100 @@ The data collected by Airbnb can be classified along two dimensions: the data so
 
 - When utilizing data for research, analysis, and descriptions of communities, it's essential to acknowledge that the produced data may only offer a partial reflection of the status of certain communities, not encompassing all aspects. However, the release of these findings can have diverse impacts on the community, including external evaluations, rent fluctuations, effects on residents' lives, and socioeconomic stratification. Therefore, careful consideration of the potential consequences arising from the use of such data is paramount.
 
+```{python}
+import matplotlib.pyplot as plt
+import seaborn as sns
+```
+
+```{python}
+data.shape
+```
+
+```{python}
+data.info()
+```
+
+```{python}
+#数据清洗step1 查看每列缺失值个数并按照降序排序
+data.loc[:, data.isnull().sum() > 0].isnull().sum().sort_values(ascending=False)
+```
+
+```{python}
+#数据清洗step2：查看每列内容为0或基本无变化的列
+data.loc[:, data.nunique() <= 1].nunique().sort_values()
+```
+
+```{python}
+# 根据以上两个数据清洗代码，删除不需要的列
+data.drop(columns=['scrape_id', 'calendar_updated', 'neighbourhood_group_cleansed', 'license', 'bathrooms'], inplace=True)
+```
+
+```{python}
+#过滤掉last review在2019年以前的行
+# 确保 'last_review' 列是日期时间格式
+data['last_review'] = pd.to_datetime(data['last_review'], errors='coerce')
+
+# 过滤掉 'last_review' 中年份小于2019的行
+data = data[data['last_review'].dt.year >= 2019]
+
+# 显示过滤后的数据框的前几行以确认操作
+data.head()
+```
+
+```{python}
+#选取Inner London
+import geopandas as gpd
+import pandas as pd
+import matplotlib.pyplot as plt
+from shapely.geometry import Point
+
+# 读取伦敦区域的GeoPackage文件
+gdf_boroughs = gpd.read_file('Boroughs.gpkg', layer='boroughs')
+
+# 读取包含经纬度的CSV文件
+data = pd.read_csv(file_gz, encoding='ISO-8859-1')
+
+# 创建点的地理数据
+geometry = [Point(xy) for xy in zip(data['longitude'], data['latitude'])]
+gdf_points = gpd.GeoDataFrame(data, geometry=geometry)
+
+# 确保点的CRS与区域的CRS相同
+gdf_points.crs = "EPSG:4326"  # 假设原始点数据是WGS84
+data = gdf_points.to_crs(gdf_boroughs.crs)
+
+# 绘图
+fig, ax = plt.subplots(figsize=(10, 10))
+gdf_boroughs.plot(ax=ax, color='lightgrey')
+
+# 仅在选定区域内绘制点Inner London
+#selected_boroughs = ['Camden', 'Westminster', 'Kensington and Chelsea']# 示例区域名称
+selected_boroughs = [
+    'Camden', 
+    'Hackney', 
+    'Hammersmith and Fulham', 
+    'Islington', 
+    'Kensington and Chelsea', 
+    'Lambeth', 
+    'Lewisham', 
+    'Southwark', 
+    'Tower Hamlets', 
+    'Wandsworth', 
+    'Westminster'
+]
+
+# 创建一个指示每个点是否位于选定区的布尔序列
+in_selected_borough = data.apply(lambda x: any(borough.contains(x.geometry) for borough in gdf_boroughs[gdf_boroughs['NAME'].isin(selected_boroughs)].geometry), axis=1)
+
+# 绘制在选定区域内的点
+data[in_selected_borough].plot(ax=ax, color='blue', markersize=1)
+
+# 调整坐标轴的显示范围
+ax.set_xlim(gdf_boroughs.total_bounds[0], gdf_boroughs.total_bounds[2])
+ax.set_ylim(gdf_boroughs.total_bounds[1], gdf_boroughs.total_bounds[3])
+
+# 显示地图
+plt.show()
+```
 
 ## 6. With reference to the data (*i.e.* using numbers, figures, maps, and descriptive statistics), what does an analysis of Hosts and Listing types suggest about the nature of Airbnb lets in London? 
 
