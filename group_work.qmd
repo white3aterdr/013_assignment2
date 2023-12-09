@@ -388,7 +388,7 @@ data_2 = data_2[data_2['reviews_per_day'] <= 1]
 data_2['occupancy_rate'] = ((30 - data_2['availability_30']) / 30) 
 
 # 将 occupancy_rate 和 reviews_per_day 数值加权相加，其中评论数结合留评率概念，取10倍权重
-data_2['combined_value'] = data_2['occupancy_rate'] + 10*data_2['reviews_per_day']
+data_2['combined_value'] = data_2['occupancy_rate'] + 2*data_2['reviews_per_day']
 
 result_columns = ['number_of_reviews', 'operating_days', 'reviews_per_day', 'occupancy_rate', 'combined_value']
 print(data_2[result_columns].head())
@@ -422,6 +422,7 @@ print(data_2[['host_is_superhost', 'combined_value', 'super_host_rate']].head())
 
 # 假设使用固定数值作为阈值来分热度，这里我们需要五个阈值分成六个区间
 dimension_1 = data_2.sort_values(by='super_host_rate',ascending=False)
+
 
 
 thresholds = [dimension_1.super_host_rate.quantile(0.00),
@@ -607,6 +608,150 @@ axs[1].set_ylim([ymin, ymax])
 # 显示结果
 plt.show()
 ```
+
+```{python}
+data_2.info()
+```
+
+```{python}
+from sklearn.preprocessing import OneHotEncoder # We don't use this but I point out where you *could*
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.decomposition import LatentDirichletAllocation
+```
+
+```{python}
+import nltk
+import spacy
+from nltk.corpus import wordnet as wn
+from nltk.stem.wordnet import WordNetLemmatizer
+
+from nltk.corpus import stopwords
+
+from nltk.tokenize import word_tokenize, sent_tokenize
+from nltk.tokenize.toktok import ToktokTokenizer
+
+from nltk.stem.porter import PorterStemmer
+from nltk.stem.snowball import SnowballStemmer
+
+from nltk import ngrams, FreqDist
+
+lemmatizer = WordNetLemmatizer()
+tokenizer = ToktokTokenizer()
+```
+
+```{python}
+# the method in the practical-07
+import urllib.request
+host  = 'https://orca.casa.ucl.ac.uk'
+turl  = f'{host}/~jreades/__textual__.py'
+tdirs = os.path.join('textual')
+tpath = os.path.join(tdirs,'__init__.py')
+
+if not os.path.exists(tpath):
+    os.makedirs(tdirs, exist_ok=True)
+    urllib.request.urlretrieve(turl, tpath)
+```
+
+```{python}
+from textual import *
+```
+
+```{python}
+def textual_alazying(dataDescription):
+    # fill in the Na values
+    corpus = dataDescription.description.fillna(' ').values
+    fcounts = dict()
+    
+    #fitting the cvectorize with corpus
+    cvectorizer = CountVectorizer(ngram_range=(1,2))
+    cvectorizer.fit(corpus)
+    #Convert text data into a matrix
+    cvtcorpus = cvectorizer.transform(corpus)
+    
+    cvdf = pd.DataFrame(data=cvtcorpus.toarray(),columns=cvectorizer.get_feature_names_out())
+    #Filter Low-Frequency Words
+    filter_terms = cvdf.sum(axis=0) >= cvdf.shape[0] * 0.01
+    fcvdf = cvdf.drop(columns=cvdf.columns[~filter_terms].values)
+    return fcvdf
+```
+
+```{python}
+description = []
+# select the houses which is 5 in star_rating
+Rank5_house = data_2[data_2['star_rating'] == 5]
+#normalise the text
+Rank5_house['description'] = Rank5_house.description.apply(normalise_document, remove_digits=True)
+analyzeRank5 = Rank5_house
+
+# select the houses which is 4 in star_rating
+Rank4_house = data_2[data_2['star_rating'] == 4]
+#normalise the text
+Rank4_house['description'] = Rank4_house.description.apply(normalise_document, remove_digits=True)
+analyzeRank4 = Rank4_house
+
+# select the houses which is 3 in star_rating
+Rank3_house = data_2[data_2['star_rating'] == 3]
+#normalise the text
+Rank3_house['description'] = Rank3_house.description.apply(normalise_document, remove_digits=True)
+analyzeRank3 = Rank3_house
+
+# select the houses which is 2 in star_rating
+Rank2_house = data_2[data_2['star_rating'] == 2]
+#normalise the text
+Rank2_house['description'] = Rank2_house.description.apply(normalise_document, remove_digits=True)
+analyzeRank2 = Rank2_house
+
+# select the houses which is 1 in star_rating
+Rank1_house = data_2[data_2['star_rating'] == 1]
+#normalise the text
+Rank1_house['description'] = Rank1_house.description.apply(normalise_document, remove_digits=True)
+analyzeRank1 = Rank1_house
+```
+
+```{python}
+cvdf5 = textual_alazying(analyzeRank5)
+cvdf4 = textual_alazying(analyzeRank4)
+cvdf3 = textual_alazying(analyzeRank3)
+cvdf2 = textual_alazying(analyzeRank2)
+cvdf1 = textual_alazying(analyzeRank1)
+```
+
+```{python}
+cvdf5.sum().sort_values(ascending=False).head(10)
+```
+
+```{python}
+cvdf4.sum().sort_values(ascending=False).head(10)
+```
+
+```{python}
+cvdf3.sum().sort_values(ascending=False).head(10)
+```
+
+```{python}
+cvdf2.sum().sort_values(ascending=False).head(10)
+```
+
+```{python}
+cvdf1.sum().sort_values(ascending=False).head(10)
+```
+
+```{python}
+# Deletion of a large number of co-existing words : space, london,
+cvdf5.sum().sort_values(ascending=False).iloc[9:20]
+```
+
+```{python}
+cvdf1.sum().sort_values(ascending=False).iloc[9:20]
+```
+
+```{python}
+comparison = cvdf3.sum().sort_values(ascending=False).compare(cvdf4.sum().sort_values(ascending=False))
+print(comparison)
+```
+
+
 
 ## 6. With reference to the data (*i.e.* using numbers, figures, maps, and descriptive statistics), what does an analysis of Hosts and Listing types suggest about the nature of Airbnb lets in London? 
 
