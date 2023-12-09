@@ -93,9 +93,15 @@ Are there any areas on which you would appreciate more detailed feedback if we'r
 import os
 import requests
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import geopandas as gpd
+from shapely.geometry import Point
 ```
 
 ```{python}
+# 确认数据文件是否存在，如无则下载
 file_gz = 'listings.csv.gz'
 url_gz = 'https://github.com/white3aterdr/013_assignment2/raw/main/listings.csv.gz'
 
@@ -105,7 +111,7 @@ else:
     data = pd.read_csv(url_gz, compression='gzip', encoding='ISO-8859-1', dtype={68: str}, low_memory=False)
     data.to_csv(file_gz)
 
-
+# 确认参考文献文件是否存在，如无则下载
 file_bib = "bio.bib"
 url_bib = "https://github.com/white3aterdr/013_assignment2/raw/main/bio.bib"
 
@@ -114,13 +120,22 @@ if not os.path.exists(file_bib):
     with open(file_bib, "wb") as file:
         file.write(response.content)
 
-
+# 确认格式文件是否存在，如无则下载
 file_csl = "harvard-cite-them-right.csl"
 url_csl = "https://github.com/white3aterdr/013_assignment2/raw/main/harvard-cite-them-right.csl"
 
 if not os.path.exists(file_csl):
     response = requests.get(url_csl)
     with open(file_csl, "wb") as file:
+        file.write(response.content)
+
+# 确认地理文件是否存在，如无则下载
+file_gpkg = "Boroughs.gpkg"
+url_gpkg = "https://github.com/white3aterdr/013_assignment2/raw/main/Boroughs.gpkg"
+
+if not os.path.exists(file_gpkg):
+    response = requests.get(url_gpkg)
+    with open(file_gpkg, "wb") as file:
         file.write(response.content)
 ```
 
@@ -217,57 +232,49 @@ The data collected by Airbnb can be classified along two dimensions: the data so
 - When utilizing data for research, analysis, and descriptions of communities, it's essential to acknowledge that the produced data may only offer a partial reflection of the status of certain communities, not encompassing all aspects. However, the release of these findings can have diverse impacts on the community, including external evaluations, rent fluctuations, effects on residents' lives, and socioeconomic stratification. Therefore, careful consideration of the potential consequences arising from the use of such data is paramount.
 
 ```{python}
-import matplotlib.pyplot as plt
-import seaborn as sns
+# 确认数据内容
+# data.shape
 ```
 
 ```{python}
-data.shape
+# 确认数据内容
+# data.info()
 ```
 
 ```{python}
-data.info()
-```
-
-```{python}
-#数据清洗step1 查看每列缺失值个数并按照降序排序
+# 数据清洗step1 查看每列缺失值个数并按照降序排序
 data.loc[:, data.isnull().sum() > 0].isnull().sum().sort_values(ascending=False)
 ```
 
 ```{python}
-#数据清洗step2：查看每列内容为0或基本无变化的列
+# 数据清洗step2：查看每列内容为0或基本无变化的列
 data.loc[:, data.nunique() <= 1].nunique().sort_values()
 ```
 
 ```{python}
 # 根据以上两个数据清洗代码，删除不需要的列
-data.drop(columns=['scrape_id', 'calendar_updated', 'neighbourhood_group_cleansed', 'license', 'bathrooms'], inplace=True)
+data = data.drop(columns=['scrape_id', 'calendar_updated', 'neighbourhood_group_cleansed', 'license', 'bathrooms'])
 ```
 
 ```{python}
-#过滤掉last review在2019年以前的行
+# 过滤掉last review在2019年以前的行
 # 确保 'last_review' 列是日期时间格式
 data['last_review'] = pd.to_datetime(data['last_review'], errors='coerce')
 
 # 过滤掉 'last_review' 中年份小于2019的行
 data = data[data['last_review'].dt.year >= 2019]
-
-# 显示过滤后的数据框的前几行以确认操作
-data.head()
 ```
 
 ```{python}
-#选取Inner London
-import geopandas as gpd
-import pandas as pd
-import matplotlib.pyplot as plt
-from shapely.geometry import Point
+# 确认操作结果
+# data.info()
+```
+
+```{python}
+# 这段代码运行时间较长
 
 # 读取伦敦区域的GeoPackage文件
 gdf_boroughs = gpd.read_file('Boroughs.gpkg', layer='boroughs')
-
-# 读取包含经纬度的CSV文件
-data = pd.read_csv(file_gz, encoding='ISO-8859-1')
 
 # 创建点的地理数据
 geometry = [Point(xy) for xy in zip(data['longitude'], data['latitude'])]
@@ -277,12 +284,7 @@ gdf_points = gpd.GeoDataFrame(data, geometry=geometry)
 gdf_points.crs = "EPSG:4326"  # 假设原始点数据是WGS84
 data = gdf_points.to_crs(gdf_boroughs.crs)
 
-# 绘图
-fig, ax = plt.subplots(figsize=(10, 10))
-gdf_boroughs.plot(ax=ax, color='lightgrey')
-
-# 仅在选定区域内绘制点Inner London
-#selected_boroughs = ['Camden', 'Westminster', 'Kensington and Chelsea']# 示例区域名称
+# 筛选Inner London的区域
 selected_boroughs = [
     'Camden', 
     'Hackney', 
@@ -300,14 +302,309 @@ selected_boroughs = [
 # 创建一个指示每个点是否位于选定区的布尔序列
 in_selected_borough = data.apply(lambda x: any(borough.contains(x.geometry) for borough in gdf_boroughs[gdf_boroughs['NAME'].isin(selected_boroughs)].geometry), axis=1)
 
-# 绘制在选定区域内的点
-data[in_selected_borough].plot(ax=ax, color='blue', markersize=1)
+# 创建并列的两张地图
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 10), facecolor='white')  # 设置图表底色为淡米黄色
 
-# 调整坐标轴的显示范围
-ax.set_xlim(gdf_boroughs.total_bounds[0], gdf_boroughs.total_bounds[2])
-ax.set_ylim(gdf_boroughs.total_bounds[1], gdf_boroughs.total_bounds[3])
+# 绘制左侧地图：未经筛选的数据
+gdf_boroughs.plot(ax=ax1, color='white', edgecolor='grey', linewidth=0.6)  # 米黄色填充，灰色边界，外围边界加粗
+data.plot(ax=ax1, color='deepskyblue', markersize=1, alpha=0.5)  # 增加点的透明度
+ax1.axis('off')  # 不显示坐标轴
+
+# 绘制右侧地图：筛选后的数据
+gdf_boroughs.plot(ax=ax2, color='white', edgecolor='grey', linewidth=0.6)
+data[in_selected_borough].plot(ax=ax2, color='deepskyblue', markersize=0.4, alpha=0.3)
+ax2.axis('off')
+
+# 设置标题
+ax1.set_title('(a) All Points')
+ax2.set_title('(b) Points in Selected Boroughs')
 
 # 显示地图
+plt.show()
+```
+
+```{python}
+# 用过滤后的数据覆盖原有的 DataFrame
+# 在这里更换变量名，避免后续更改代码导致需要从最初读取data耗费时间过长
+data_2 = data[in_selected_borough].copy()
+
+# 覆盖保存原有的 CSV 文件
+# data_2.to_csv('clean_listings_1.csv', index=False)
+```
+
+```{python}
+# data_2.info()
+```
+
+```{python}
+# 删除之后品质评级和热度评级中包含缺失值的行
+columns_to_check = [
+    'review_scores_accuracy', 
+    'review_scores_cleanliness', 
+    'review_scores_checkin', 
+    'review_scores_communication', 
+    'review_scores_location', 
+    'review_scores_value',
+    'last_review',
+    'first_review',
+    'number_of_reviews',
+    'availability_365',
+    'availability_90',
+    'availability_60',
+    'availability_30',
+]
+
+# 删除这些列中含有缺失值的行
+data_2 = data_2.dropna(subset=columns_to_check)
+```
+
+```{python}
+# 删除60天内无空房的列，我们认为这些listing并非订满，而是由于host设置不可预定
+data_2 = data_2[data_2['availability_60'] != 0]
+```
+
+```{python}
+# 维度1：热度
+
+# 确保日期列是 datetime 类型
+data_2['last_review'] = pd.to_datetime(data_2['last_review'])
+data_2['first_review'] = pd.to_datetime(data_2['first_review'])
+
+# 计算日期差并转换为天数
+data_2['operating_days'] = (data_2['last_review'] - data_2['first_review']).dt.days
+
+# 避免除以零，我们可以给分母加上一个小的数值，如 0.1，或者直接过滤掉这些行
+data_2 = data_2[data_2['operating_days'] > 0]
+
+# 计算reviews per day，考虑不可用的天数
+data_2['reviews_per_day'] = data_2['number_of_reviews'] / (data_2['operating_days'])
+
+# 删除reviews per day > 1 的数据
+data_2 = data_2[data_2['reviews_per_day'] <= 1]
+```
+
+```{python}
+#计算月入住率
+data_2['occupancy_rate'] = ((30 - data_2['availability_30']) / 30) 
+
+# 将 occupancy_rate 和 reviews_per_day 数值加权相加，其中评论数结合留评率概念，取10倍权重
+data_2['combined_value'] = data_2['occupancy_rate'] + 10*data_2['reviews_per_day']
+
+result_columns = ['number_of_reviews', 'operating_days', 'reviews_per_day', 'occupancy_rate', 'combined_value']
+print(data_2[result_columns].head())
+```
+
+```{python}
+# 根据 'host_is_superhost' 更新 'reviews_per_day_super_host' 列的值
+data_2['super_host_rate'] = data_2.apply(
+    lambda row: row['combined_value'] + 0.5 if row['host_is_superhost'] == 't' else row['combined_value'],
+    axis=1
+)
+
+# 查看结果
+print(data_2[['host_is_superhost', 'combined_value', 'super_host_rate']].head())
+```
+
+```{python}
+# data_2['reviews_per_day'].describe()
+```
+
+```{python}
+# data_2['occupancy_rate'].describe()
+```
+
+```{python}
+# data_2['super_host_rate'].describe()
+```
+
+```{python}
+# [之前的代码片段来计算 reviews_per_day 和 reviews_per_day_super_host]
+
+# 假设使用固定数值作为阈值来分热度，这里我们需要五个阈值分成六个区间
+dimension_1 = data_2.sort_values(by='super_host_rate',ascending=False)
+
+
+thresholds = [dimension_1.super_host_rate.quantile(0.00),
+              dimension_1.super_host_rate.quantile(0.20), 
+              dimension_1.super_host_rate.quantile(0.40), 
+              dimension_1.super_host_rate.quantile(0.60), 
+              dimension_1.super_host_rate.quantile(0.80), 
+              dimension_1.super_host_rate.quantile(1.00)]  # 举例的阈值
+labels = [1, 2, 3, 4, 5]  # 五个热度标签
+
+# 分配热度
+data_2['star_rating'] = pd.cut(data_2['super_host_rate'], bins=thresholds, labels=labels, include_lowest=True)
+```
+
+```{python}
+# 假设热度已经被计算并分配到 'star_rating' 列中
+star_rating_counts = data_2['star_rating'].value_counts()
+
+# 按照热度排序，如果有必要的话
+star_rating_counts_sorted = star_rating_counts.sort_index()
+
+# 打印热度个数统计
+print(star_rating_counts_sorted)
+```
+
+```{python}
+# 维度2：品质
+# 加权依据：https://medium.com/@labdmitriy/exploring-airbnb-guest-reviews-in-london-682b45aba34e中问题1和问题2的结论
+# 定义加权平均的权重
+weights = {
+    'review_scores_accuracy': 1.5,
+    'review_scores_cleanliness': 1,
+    'review_scores_checkin': 1.5,
+    'review_scores_communication': 1.5,
+    'review_scores_location': 2.0,
+    'review_scores_value': 1.5
+}
+
+# 定义评分列的列表
+score_columns = [
+    'review_scores_accuracy', 
+    'review_scores_cleanliness', 
+    'review_scores_checkin', 
+    'review_scores_communication', 
+    'review_scores_location', 
+    'review_scores_value'
+]
+# 将评分列转换为浮点数
+for col in score_columns:
+    data_2[col] = pd.to_numeric(data_2[col], errors='coerce')  # 将无法转换的值设置为 NaN
+
+# 计算加权平均分的函数
+def weighted_average(row):
+    total_score = sum(row[col] * weights[col] for col in score_columns if not pd.isna(row[col]))
+    total_weight = sum(weights[col] for col in score_columns if not pd.isna(row[col]))
+    return total_score / total_weight if total_weight > 0 else None
+
+# 应用加权平均分计算函数
+data_2['weighted_score'] = data_2.apply(weighted_average, axis=1)
+sorted_data_descending = data_2.sort_values(by='weighted_score',ascending=False)
+
+# 定义品质等级的函数
+def satisfaction_level(weighted_score):
+    if weighted_score >= sorted_data_descending.weighted_score.quantile(0.80) :
+        return 5
+    elif weighted_score >= sorted_data_descending.weighted_score.quantile(0.60):
+        return 4
+    elif weighted_score >= sorted_data_descending.weighted_score.quantile(0.40):
+        return 3
+    elif weighted_score >= sorted_data_descending.weighted_score.quantile(0.20):
+        return 2
+    else:
+        return 1
+
+# 应用品质等级计算函数
+data_2['satisfaction_level'] = data_2['weighted_score'].apply(satisfaction_level)
+
+# 显示所有的品质等级
+#print(data_2['satisfaction_level'].tolist())
+print(data_2['satisfaction_level'].value_counts())
+```
+
+```{python}
+# Save to a new CSV file
+# 在本地IDE中生成名为Clean_listings的数据清洗整理和评级后的csv
+
+#corrected_classified_file_name = 'clean_listings_2.csv'
+#data_2.to_csv(corrected_classified_file_name, index=False)
+
+# Print the file save path
+#print(f"Corrected classified listings file saved as: {corrected_classified_file_name}")
+```
+
+```{python}
+print(gdf_points_new['star_rating'].describe())
+```
+
+```{python}
+print(gdf_quality['satisfaction_level'].describe())
+```
+
+```{python}
+# 加载伦敦区域的GeoPackage文件
+gdf_boroughs_new = gpd.read_file('Boroughs.gpkg', layer='boroughs')
+
+# 假设 data_2 已经包含了经纬度信息和 'star_rating' 列
+geometry = [Point(xy) for xy in zip(data_2['longitude'], data_2['latitude'])]
+gdf_points_new = gpd.GeoDataFrame(data_2, geometry=geometry)
+
+# 设置坐标参考系统(CRS)
+gdf_points_new.crs = "EPSG:4326"  # 假设原始点数据是WGS84
+gdf_points_new = gdf_points_new.to_crs(gdf_boroughs_new.crs)
+
+# 绘制伦敦区域
+#fig, ax = plt.subplots(figsize=(12, 8))
+#gdf_boroughs_new.plot(ax=ax, color='lightgrey')
+
+# 绘制点，使用评级信息来改变颜色
+#gdf_points_new.plot(ax=ax, column='star_rating', cmap='viridis', legend=True, markersize=50)
+
+# 添加图例和标题
+#plt.legend(title='Star Rating')
+#plt.title('Star Ratings in London')
+
+# 显示结果
+#plt.show()
+```
+
+```{python}
+geometry = [Point(xy) for xy in zip(data_2['longitude'], data_2['latitude'])]
+gdf_quality = gpd.GeoDataFrame(data_2, geometry=geometry)
+
+# 设置坐标参考系统(CRS)
+gdf_quality.crs = "EPSG:4326"
+gdf_quality = gdf_quality.to_crs(gdf_boroughs_new.crs)
+
+# 绘制伦敦区域
+#fig, ax = plt.subplots(figsize=(12, 8))
+#gdf_boroughs_new.plot(ax=ax, color='lightgrey')
+
+# 绘制点，根据 'satisfaction_level' 改变颜色
+#gdf_quality.plot(ax=ax, column='satisfaction_level', cmap='viridis', legend=True, markersize=50)
+
+# 添加图例和标题
+#plt.legend(title='Satisfaction Level')
+#plt.title('Satisfaction Levels in London')
+
+# 显示结果
+#plt.show()
+```
+
+```{python}
+# 创建包含两个子图的画布，这里的 figsize 需要根据实际情况调整
+fig, axs = plt.subplots(1, 2, figsize=(20, 10))
+
+# 调整子图之间的间距来为图例留出空间
+plt.subplots_adjust(wspace=0.3)
+
+# 第一个子图：热度评分
+gdf_boroughs_new.plot(ax=axs[0], color='white', edgecolor='lightgrey')
+scatter1 = gdf_points_new.plot(ax=axs[0], column='star_rating', cmap='viridis', markersize=1)
+
+# 第二个子图：品质等级
+gdf_boroughs_new.plot(ax=axs[1], color='white', edgecolor='lightgrey')
+scatter2 = gdf_quality.plot(ax=axs[1], column='satisfaction_level', cmap='viridis', markersize=1)
+
+# 添加图例，位于图的右侧
+fig.colorbar(scatter1.get_children()[0], ax=axs, orientation='vertical', fraction=0.02, pad=0.02)
+
+# 设置标题
+axs[0].set_title('Popular Levels in London')
+axs[1].set_title('Quality Levels in London')
+
+# 需要调整显示范围以只显示点的分布区域
+xmin, ymin, xmax, ymax = gdf_points_new.total_bounds
+axs[0].set_xlim([xmin, xmax])
+axs[0].set_ylim([ymin, ymax])
+
+xmin, ymin, xmax, ymax = gdf_quality.total_bounds
+axs[1].set_xlim([xmin, xmax])
+axs[1].set_ylim([ymin, ymax])
+
+# 显示结果
 plt.show()
 ```
 
@@ -320,4 +617,3 @@ plt.show()
 
 
 ## References
-
