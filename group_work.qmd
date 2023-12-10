@@ -753,36 +753,26 @@ from textual import *
 # select the houses which is 5 in star_rating and satisfaction_level
 Rank5_house = data_2[data_2['star_rating'] == 5]
 satisfaction5_house = data_2[data_2['satisfaction_level'] == 5]
-#normalise the text
-#Rank5_house['description'] = Rank5_house.description.apply(normalise_document, remove_digits=True)
 analyzeRank5 = Rank5_house
 
 # select the houses which is 4 in star_rating and satisfaction_level
 Rank4_house = data_2[data_2['star_rating'] == 4]
 satisfaction4_house = data_2[data_2['satisfaction_level'] == 4]
-#normalise the text
-#Rank4_house['description'] = Rank4_house.description.apply(normalise_document, remove_digits=True)
 analyzeRank4 = Rank4_house
 
 # select the houses which is 3 in star_rating and satisfaction_level
 Rank3_house = data_2[data_2['star_rating'] == 3]
 satisfaction3_house = data_2[data_2['satisfaction_level'] == 3]
-#normalise the text
-#Rank3_house['description'] = Rank3_house.description.apply(normalise_document, remove_digits=True)
 analyzeRank3 = Rank3_house
 
 # select the houses which is 2 in star_rating and satisfaction_level
 Rank2_house = data_2[data_2['star_rating'] == 2]
 satisfaction2_house = data_2[data_2['satisfaction_level'] == 2]
-#normalise the text
-#Rank2_house['description'] = Rank2_house.description.apply(normalise_document, remove_digits=True)
 analyzeRank2 = Rank2_house
 
 # select the houses which is 1 in star_rating and satisfaction_level
 Rank1_house = data_2[data_2['star_rating'] == 1]
 satisfaction1_house = data_2[data_2['satisfaction_level'] == 1]
-#normalise the text
-#Rank1_house['description'] = Rank1_house.description.apply(normalise_document, remove_digits=True)
 analyzeRank1 = Rank1_house
 
 
@@ -813,7 +803,6 @@ for i in extreme:
     j = i.dropna(subset=['host_response_rate'])
     mean = j['host_response_rate'].str.rstrip('%').astype('float') / 100.0
     host_response_rate.append(mean.mean())
-
 ```
 
 ```{python}
@@ -833,8 +822,6 @@ for i in extreme:
     j = i.dropna(subset=['host_acceptance_rate'])
     mean = j['host_acceptance_rate'].str.rstrip('%').astype('float') / 100.0
     host_acceptance_rate.append(mean.mean())
-
-    
 ```
 
 ```{python}
@@ -869,7 +856,6 @@ for i in extreme:
         total = total + len(i)
     averge = total/len(textlist)
     neighborhood_overview.append(averge)
-
 ```
 
 ```{python}
@@ -964,6 +950,7 @@ for i in extreme:
 ```{python}
 #| editable: true
 #| slideshow: {slide_type: ''}
+#Creating df table
 row_list = ['Rank1_house','Rank2_house','Rank3_house','Rank4_house','Rank5_house',
             'satisfaction1_house','satisfaction2_house','satisfaction3_house','satisfaction4_house','satisfaction5_house',
            'highRank_lowSat', 'lowRank_highSat']
