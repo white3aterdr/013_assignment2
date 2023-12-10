@@ -53,20 +53,26 @@ jupyter:
 
 We, Rookie Programmers, confirm that the work presented in this assessment is our own. Where information has been derived from other sources, we confirm that this has been indicated in the work. Where a Large Language Model such as ChatGPT has been used we confirm that we have made its contribution to the final submission clear.
 
-Date: 2023/12/06
+Date: 2023/12/11
 
-Student Numbers: 23148316/
+Student Numbers: 23148316/23100260/23049577/23202303
 
 ## Brief Group Reflection
 
 | What Went Well | What Was Challenging |
 | -------------- | -------------------- |
-| A              | B                    |
-| C              | D                    |
+| Great collaboration and division of labor within the group | It was difficult to select topics and find other data sets. In the end, we chose to only use the listing.csv data, and it was difficult to evaluate whether a topic was suitable before completing it. |
+| The pace of work is good and it is basically completed about a week ahead of schedule. | Initially we hoped to analyze keywords, but did not get results, and we did not have the sophisticated technology of NLP. We adjusted the direction, tried to analyze other aspects, and obtained some conclusions, but we did not meet expectations. |
 
 ## Priorities for Feedback
 
 Are there any areas on which you would appreciate more detailed feedback if we're able to offer it?
+
+There are two aspects.
+
+We attempted to develop two rating criteria in our analysis, which required defining weights, for which there are few references. In the urban planning industry, when similar situations are involved, definitions are sometimes defined by inviting experts to score. So for group work like ours, can we first find reasonable indicators based on current conditions, and adopt similar methods to optimize in the future if necessary and conditional?
+
+In our analysis, we initially wanted to use NLP to analyze subjective descriptive text. However, in practice, we found that only using keyword frequency analysis cannot draw effective conclusions, and the skills we have mastered are not enough to complete it. Although we have adjusted the research direction later, what should we do if in some cases, a research does not reach a conclusion of obvious significance in the end? What kind of evaluation will it get?
 
 ```{=html}
 <style type="text/css">
@@ -108,7 +114,7 @@ warnings.filterwarnings('ignore')
 ```
 
 ```{python}
-# 确认数据文件是否存在，如无则下载
+# Check if the data file exists, if not, download it
 file_gz = 'listings.csv.gz'
 url_gz = 'https://github.com/white3aterdr/013_assignment2/raw/main/listings.csv.gz'
 
@@ -118,7 +124,7 @@ else:
     data = pd.read_csv(url_gz, compression='gzip', encoding='ISO-8859-1', dtype={68: str}, low_memory=False)
     data.to_csv(file_gz)
 
-# 确认参考文献文件是否存在，如无则下载
+# Check if the bibliography file exists, if not, download it
 file_bib = "bio.bib"
 url_bib = "https://github.com/white3aterdr/013_assignment2/raw/main/bio.bib"
 
@@ -127,7 +133,7 @@ if not os.path.exists(file_bib):
     with open(file_bib, "wb") as file:
         file.write(response.content)
 
-# 确认格式文件是否存在，如无则下载
+# Check if the style file exists, if not, download it
 file_csl = "harvard-cite-them-right.csl"
 url_csl = "https://github.com/white3aterdr/013_assignment2/raw/main/harvard-cite-them-right.csl"
 
@@ -136,7 +142,7 @@ if not os.path.exists(file_csl):
     with open(file_csl, "wb") as file:
         file.write(response.content)
 
-# 确认地理文件是否存在，如无则下载
+# Check if the geographic file exists, if not, download it
 file_gpkg = "Boroughs.gpkg"
 url_gpkg = "https://github.com/white3aterdr/013_assignment2/raw/main/Boroughs.gpkg"
 
@@ -145,7 +151,7 @@ if not os.path.exists(file_gpkg):
     with open(file_gpkg, "wb") as file:
         file.write(response.content)
 
-# 确认csv文件是否存在，如无则下载
+# Check if the csv file exists, if not, download it
 file1_csv = "formatted_df1.csv"
 url1_csv = "https://github.com/white3aterdr/013_assignment2/raw/main/formatted_df1.csv"
 
@@ -154,7 +160,7 @@ if not os.path.exists(file1_csv):
     with open(file1_csv, "wb") as file:
         file.write(response.content)
 
-# 确认csv文件是否存在，如无则下载
+# Check if the csv file exists, if not, download it
 file2_csv = "formatted_df2.csv"
 url2_csv = "https://github.com/white3aterdr/013_assignment2/raw/main/formatted_df2.csv"
 
@@ -256,6 +262,7 @@ The data collected by Airbnb can be classified along two dimensions: the data so
 
 - When utilizing data for research, analysis, and descriptions of communities, it's essential to acknowledge that the produced data may only offer a partial reflection of the status of certain communities, not encompassing all aspects. However, the release of these findings can have diverse impacts on the community, including external evaluations, rent fluctuations, effects on residents' lives, and socioeconomic stratification. Therefore, careful consideration of the potential consequences arising from the use of such data is paramount.
 
+
 ```{python}
 # data.shape
 ```
@@ -265,25 +272,25 @@ The data collected by Airbnb can be classified along two dimensions: the data so
 ```
 
 ```{python}
-# 数据清洗step1： 查看每列缺失值个数并按照降序排序
+# Data cleaning step1: Check the number of missing values ​​in each column and sort them in descending order
 data.loc[:, data.isnull().sum() > 0].isnull().sum().sort_values(ascending=False);
 ```
 
 ```{python}
-# 数据清洗step2： 查看每列内容为0或基本无变化的列
+# Data cleaning step 2: Check the columns whose content is 0 or basically unchanged
 data.loc[:, data.nunique() <= 1].nunique().sort_values();
 ```
 
 ```{python}
-# 根据以上结果清洗数据，删除不需要的列
+# Clean the data based on the above results and delete unnecessary columns
 data = data.drop(columns=['scrape_id', 'calendar_updated', 'neighbourhood_group_cleansed', 'license', 'bathrooms'])
 ```
 
 ```{python}
-# 确保 'last_review' 列是日期时间格式
+# Make sure the 'last_review' column is in datetime format
 data['last_review'] = pd.to_datetime(data['last_review'], errors='coerce')
 
-# 过滤掉 'last_review' 中年份小于2019的行
+# Filter out rows in 'last_review' with years less than 2019
 data = data[data['last_review'].dt.year >= 2019]
 ```
 
@@ -292,20 +299,20 @@ data = data[data['last_review'].dt.year >= 2019]
 ```
 
 ```{python}
-# 这段代码运行时间较长
+# This code takes a long time to run
 
-# 读取伦敦区域的GeoPackage文件
+# Read the GeoPackage file for London boroughs
 gdf_boroughs = gpd.read_file('Boroughs.gpkg', layer='boroughs')
 
-# 创建点的地理数据
+# Create geographical data for points
 geometry = [Point(xy) for xy in zip(data['longitude'], data['latitude'])]
 gdf_points = gpd.GeoDataFrame(data, geometry=geometry)
 
-# 确保点的CRS与地图的CRS相同
+# Ensure the CRS of the points is the same as the map's CRS
 gdf_points.crs = "EPSG:4326"
 data = gdf_points.to_crs(gdf_boroughs.crs)
 
-# 保留的行政区
+# Boroughs to be retained
 selected_boroughs = [
     'Camden', 
     'Hackney', 
@@ -321,37 +328,37 @@ selected_boroughs = [
     'City of London'
 ]
 
-# 创建一个指示每个点是否位于选定区的布尔序列
+# Create a Boolean series indicating whether each point is within the selected boroughs
 in_selected_borough = data.apply(lambda x: any(borough.contains(x.geometry) for borough in gdf_boroughs[gdf_boroughs['NAME'].isin(selected_boroughs)].geometry), axis=1)
 
-# 创建并列的两张地图
+# Create two side-by-side maps
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 10), facecolor='white') 
 
-# 绘制左侧地图：未经筛选的数据
+# Plot the left map: Unfiltered data
 gdf_boroughs.plot(ax=ax1, color='white', edgecolor='grey', linewidth=0.6)
 data.plot(ax=ax1, color='deepskyblue', markersize=1, alpha=0.5)
 ax1.axis('off')
 
-# 绘制右侧地图：筛选后的数据
+# Plot the right map: Filtered data
 gdf_boroughs.plot(ax=ax2, color='white', edgecolor='grey', linewidth=0.6)
 data[in_selected_borough].plot(ax=ax2, color='deepskyblue', markersize=0.4, alpha=0.3)
 ax2.axis('off')
 
-# 设置标题
+# Set titles
 ax1.set_title('(a) All Points')
 ax2.set_title('(b) Points in Selected Boroughs')
 
-# 显示地图
+# Show the map
 plt.show()
 ```
 
 ```{python}
-# 在这里更换变量名，避免后续更改代码导致需要从最初读取data耗费时间过长
+# Change the variable name here to avoid subsequent changes to the code that will take too long to read the data from the beginning.
 data_2 = data[in_selected_borough].copy()
 ```
 
 ```{python}
-# # 保存CSV文件
+# # save csv file
 # data_2.to_csv('clean_listings_1.csv', index=False)
 ```
 
@@ -360,7 +367,7 @@ data_2 = data[in_selected_borough].copy()
 ```
 
 ```{python}
-# 找到之后满意度评级和热度评级中包含缺失值的行
+# Find rows that contain missing values ​​in satisfaction ratings and popularity ratings
 columns_to_check = [
     'review_scores_accuracy', 
     'review_scores_cleanliness', 
@@ -375,40 +382,40 @@ columns_to_check = [
     'availability_30',
 ]
 
-# 删除这些列中含有缺失值的行
+# Delete rows with missing values ​​in these columns
 data_2 = data_2.dropna(subset=columns_to_check)
 ```
 
 ```{python}
-# 删除60天内无空房的列，我们认为这些listing并非订满，而是由于host设置不可预定
+# Delete the columns that have no vacancies within 60 days. We believe that these listings are not fully booked, but cannot be booked due to the host settings.
 data_2 = data_2[data_2['availability_60'] != 0]
 ```
 
 ```{python}
-# 维度1：热度
+# Dimension 1: Popularity
 
-# 确保日期列是 datetime 类型
+# Ensure the date columns are in datetime format
 data_2['last_review'] = pd.to_datetime(data_2['last_review'])
 data_2['first_review'] = pd.to_datetime(data_2['first_review'])
 
-# 计算日期差并转换为天数
+# Calculate the difference between dates and convert to days
 data_2['operating_days'] = (data_2['last_review'] - data_2['first_review']).dt.days
 
-# 避免除以零，我们可以给分母加上一个小的数值，如 0.1，在这里我们选择直接过滤掉这些行
+# To avoid division by zero, we can add a small number to the denominator, like 0.1. Here, we choose to filter out these rows instead
 data_2 = data_2[data_2['operating_days'] > 0]
 
-# 计算reviews per day
+# Calculate reviews per day
 data_2['reviews_per_day'] = data_2['number_of_reviews'] / (data_2['operating_days'])
 
-# 删除reviews per day > 1 的数据
+# Remove data where reviews per day > 1
 data_2 = data_2[data_2['reviews_per_day'] <= 1]
 ```
 
 ```{python}
-# 计算月入住率
+# Calculate monthly occupancy rate
 data_2['occupancy_rate'] = ((30 - data_2['availability_30']) / 30) 
 
-# 将 occupancy_rate 和 reviews_per_day 数值加权相加，其中评论数结合留评率概念，取10倍权重
+# Add the weighted values ​​of occupancy_rate and reviews_per_day, where the number of comments is combined with the concept of review rate, and is weighted 10 times
 data_2['combined_value'] = data_2['occupancy_rate'] + 10*data_2['reviews_per_day']
 ```
 
@@ -418,7 +425,7 @@ data_2['combined_value'] = data_2['occupancy_rate'] + 10*data_2['reviews_per_day
 ```
 
 ```{python}
-# 根据 'host_is_superhost' 更新 'reviews_per_day_super_host' 列的值
+# Update the value of the 'reviews_per_day_super_host' column based on 'host_is_superhost'
 data_2['super_host_rate'] = data_2.apply(
     lambda row: row['combined_value'] + 0.5 if row['host_is_superhost'] == 't' else row['combined_value'],
     axis=1
@@ -442,7 +449,7 @@ data_2['super_host_rate'] = data_2.apply(
 ```
 
 ```{python}
-# 假设使用固定数值作为阈值来分热度，这里我们需要五个阈值分成六个区间
+# Assume that a fixed value is used as a threshold to classify popularity. Here we need five thresholds divided into six intervals.
 dimension_1 = data_2.sort_values(by='super_host_rate',ascending=False)
 
 thresholds = [dimension_1.super_host_rate.quantile(0.00),
@@ -450,32 +457,32 @@ thresholds = [dimension_1.super_host_rate.quantile(0.00),
               dimension_1.super_host_rate.quantile(0.40), 
               dimension_1.super_host_rate.quantile(0.60), 
               dimension_1.super_host_rate.quantile(0.80), 
-              dimension_1.super_host_rate.quantile(1.00)]  # 举例的阈值
-labels = [1, 2, 3, 4, 5]  # 五个热度标签
+              dimension_1.super_host_rate.quantile(1.00)]  # Example threshold
+labels = [1, 2, 3, 4, 5]  # Five  popularity tags
 
-# 分配热度
+# Distribute popularity
 data_2['heat_level'] = pd.cut(data_2['super_host_rate'], bins=thresholds, labels=labels, include_lowest=True)
 ```
 
 ```{python}
-# 假设热度已经被计算并分配到 'heat_level' 列中
+# Assuming the popularity has already been calculated and assigned to the 'heat_level' column
 heat_level_counts = data_2['heat_level'].value_counts()
 
-# 按照热度排序
+# Sort by heat level
 heat_level_counts_sorted = heat_level_counts.sort_index()
 
-# 打印热度个数统计
+# Print the count statistics for each heat level
 # print(heat_level_counts_sorted)
 ```
 
 ```{python}
-# 这段代码运行时间较长
+# This code takes a long time to run
 
-# 维度2：满意度
+# Dimension 2: Satisfaction
 
-# 加权参考：https://medium.com/@labdmitriy/exploring-airbnb-guest-reviews-in-london-682b45aba34e中问题1和问题2的结论
+# Reference for weighted calculation: Conclusions of Question 1 and Question 2 in https://medium.com/@labdmitriy/exploring-airbnb-guest-reviews-in-london-682b45aba34e
 
-# 定义加权平均的权重
+# Define the weights for the weighted average
 weights = {
     'review_scores_accuracy': 1.5,
     'review_scores_cleanliness': 2,
@@ -485,7 +492,7 @@ weights = {
     'review_scores_value': 1
 }
 
-# 定义评分列的列表
+# Define the list of columns for scoring
 score_columns = [
     'review_scores_accuracy', 
     'review_scores_cleanliness', 
@@ -495,21 +502,21 @@ score_columns = [
     'review_scores_value'
 ]
 
-# 将评分列转换为浮点数
+# Convert scoring columns to float
 for col in score_columns:
-    data_2[col] = pd.to_numeric(data_2[col], errors='coerce')  # 将无法转换的值设置为 NaN
+    data_2[col] = pd.to_numeric(data_2[col], errors='coerce')  # Set unconvertible values to NaN
 
-# 计算加权平均分的函数
+# Function to calculate the weighted average score
 def weighted_average(row):
     total_score = sum(row[col] * weights[col] for col in score_columns if not pd.isna(row[col]))
     total_weight = sum(weights[col] for col in score_columns if not pd.isna(row[col]))
     return total_score / total_weight if total_weight > 0 else None
 
-# 应用加权平均分计算函数
+# Apply the function to calculate weighted average score
 data_2['weighted_score'] = data_2.apply(weighted_average, axis=1)
-sorted_data_descending = data_2.sort_values(by='weighted_score',ascending=False)
+sorted_data_descending = data_2.sort_values(by='weighted_score', ascending=False)
 
-# 定义满意度等级的函数
+# Define the function for satisfaction levels
 def satisfaction_level(weighted_score):
     if weighted_score >= sorted_data_descending.weighted_score.quantile(0.80) :
         return 5
@@ -522,12 +529,12 @@ def satisfaction_level(weighted_score):
     else:
         return 1
 
-# 应用满意度等级计算函数
+# Apply the function to calculate satisfaction levels
 data_2['satisfaction_level'] = data_2['weighted_score'].apply(satisfaction_level)
 ```
 
 ```{python}
-# # 显示所有的满意度等级
+# # Show all satisfaction levels
 # print(data_2['satisfaction_level'].tolist())
 # print(data_2['satisfaction_level'].value_counts())
 ```
@@ -545,12 +552,12 @@ data_2['satisfaction_level'] = data_2['weighted_score'].apply(satisfaction_level
 ```
 
 ```{python}
-# 加载伦敦区域的GeoPackage文件
+# Loading the GeoPackage file for the London region
 gdf_boroughs_new = gpd.read_file('Boroughs.gpkg', layer='boroughs')
 geometry = [Point(xy) for xy in zip(data_2['longitude'], data_2['latitude'])]
 gdf_points_new = gpd.GeoDataFrame(data_2, geometry=geometry)
 
-# 设置CRS
+# set CRS
 gdf_points_new.crs = "EPSG:4326"
 gdf_points_new = gdf_points_new.to_crs(gdf_boroughs_new.crs)
 ```
@@ -559,37 +566,37 @@ gdf_points_new = gdf_points_new.to_crs(gdf_boroughs_new.crs)
 geometry = [Point(xy) for xy in zip(data_2['longitude'], data_2['latitude'])]
 gdf_quality = gpd.GeoDataFrame(data_2, geometry=geometry)
 
-# 设置CRS
+# set CRS
 gdf_quality.crs = "EPSG:4326"
 gdf_quality = gdf_quality.to_crs(gdf_boroughs_new.crs)
 ```
 
 ```{python}
-# 创建包含两个子图的画布
+# Create a canvas with two subplots
 fig, axs = plt.subplots(1, 2, figsize=(20, 10))
 
-# 调整子图之间的间距来为图例留出空间
+# Adjust the spacing between subplots to make room for the legend
 plt.subplots_adjust(wspace=0.3)
 
-# 第一个子图：热度评分
+# First subplot: Heat levels
 gdf_boroughs_new.plot(ax=axs[0], color='white', edgecolor='lightgrey')
 scatter1 = gdf_points_new.plot(ax=axs[0], column='heat_level', cmap='viridis', markersize=3)
 
-# 第二个子图：满意度等级
+# Second subplot: Satisfaction levels
 gdf_boroughs_new.plot(ax=axs[1], color='white', edgecolor='lightgrey')
 scatter2 = gdf_quality.plot(ax=axs[1], column='satisfaction_level', cmap='viridis', markersize=3)
 
-# 为图例创建一个 ScalarMappable 对象
+# Create a ScalarMappable object for the legend
 norm = colors.Normalize(vmin=gdf_points_new['heat_level'].min(), vmax=gdf_points_new['heat_level'].max())
 sm1 = plt.cm.ScalarMappable(cmap='viridis', norm=norm)
 sm1.set_array([])
 
-# 添加第一个子图的图例
+# Add a legend for the first subplot
 divider = make_axes_locatable(axs[0])
 cax = divider.append_axes("right", size="5%", pad=0.1)
 fig.colorbar(sm1, cax=cax)
 
-# 为第二个图例重复相同步骤
+# Repeat the same steps for the second legend
 norm = colors.Normalize(vmin=gdf_quality['satisfaction_level'].min(), vmax=gdf_quality['satisfaction_level'].max())
 sm2 = plt.cm.ScalarMappable(cmap='viridis', norm=norm)
 sm2.set_array([])
@@ -598,11 +605,11 @@ divider = make_axes_locatable(axs[1])
 cax = divider.append_axes("right", size="5%", pad=0.1)
 fig.colorbar(sm2, cax=cax)
 
-# 设置标题
+# Set titles
 axs[0].set_title('(a) Heat Levels in London')
 axs[1].set_title('(b) Satisfaction Levels in London')
 
-# 调整显示范围以只显示点的分布区域
+# Adjust the display range to only show the distribution area of the points
 xmin, ymin, xmax, ymax = gdf_points_new.total_bounds
 axs[0].set_xlim([xmin, xmax])
 axs[0].set_ylim([ymin, ymax])
@@ -611,12 +618,12 @@ xmin, ymin, xmax, ymax = gdf_quality.total_bounds
 axs[1].set_xlim([xmin, xmax])
 axs[1].set_ylim([ymin, ymax])
 
-# 显示结果
+# Show the result
 plt.show()
 ```
 
 ```{python}
-# 筛选出满足条件的点
+# Filter out points that meet the conditions
 red_points = gdf_points_new[(gdf_points_new['heat_level'] == 5) & (gdf_points_new['satisfaction_level'] == 1)]
 red_points_all = gdf_points_new[(gdf_points_new['heat_level'] == 5)]
 cyan_points = gdf_points_new[(gdf_points_new['heat_level'] == 1) & (gdf_points_new['satisfaction_level'] == 5)]
@@ -645,7 +652,7 @@ ymin = min(red_points.total_bounds[1], cyan_points.total_bounds[1])
 xmax = max(red_points.total_bounds[2], cyan_points.total_bounds[2])
 ymax = max(red_points.total_bounds[3], cyan_points.total_bounds[3])
 
-# 调整显示范围以只显示点的分布区域
+# Adjust the display range to display only the distribution area of ​​the points
 xmin, ymin, xmax, ymax = gdf_points_new.total_bounds
 axs[0].set_xlim([xmin, xmax])
 axs[0].set_ylim([ymin, ymax])
@@ -711,7 +718,7 @@ plt.show()
 ```
 
 ```{python}
-# # ！！！！！！由于后面存在代码运行时间过长，因此在此将不需要的部分注释掉，如需要运行，需要十分钟以上的时间。
+# # ！！！！！！Since the running time of the subsequent code is too long, comment out the unnecessary parts here. If it needs to be run, it will take more than ten minutes.
 
 # from sklearn.preprocessing import OneHotEncoder
 # from sklearn.feature_extraction.text import TfidfVectorizer
@@ -789,7 +796,7 @@ plt.show()
 ```
 
 ```{python}
-# # 从本代码块至最后一格出现结果需要时间很长
+# # It takes a long time from this code block to the last cell to appear.
 
 # # Calculate the average of host_response_rate
 # host_response_rate = []
@@ -959,13 +966,13 @@ plt.show()
 #             'sat1','sat2','sat3','sat4','sat5',
 #             'heat5_sat1', 'heat1_sat5']
 
-# dir1 = { ' ': row_list,
+# dir1 = { 'Level': row_list,
 #         'price(£)': price,
 #         'host_response_rate(%)': host_response_rate,
 #         'host_acceptance_rate(%)': host_acceptance_rate
 #       }
 
-# dir2 = { ' ': row_list,
+# dir2 = { 'Level': row_list,
 #         'neighborhood_overview': neighborhood_overview,
 #         'description': description,
 #         'host_about': host_about
@@ -976,17 +983,17 @@ plt.show()
 # # format DataFrame1
 # formatted_df1 = pd.DataFrame(dir1)
 
-# # 格式化列
+# # Format columns
 # formatted_df1['price(£)'] = formatted_df1['price(£)'].round(2)
 
-# # 将小数转换为百分数并保留两位小数
+# # Convert decimal to percent with two decimal places
 # formatted_df1['host_response_rate(%)'] = (formatted_df1['host_response_rate(%)'] * 100).round(2)
 # formatted_df1['host_acceptance_rate(%)'] = (formatted_df1['host_acceptance_rate(%)'] * 100).round(2)
 
 # # format DataFrame2
 # formatted_df2 = pd.DataFrame(dir2)
 
-# # 将列转换为整数
+# # Convert column to integer
 # formatted_df2['neighborhood_overview'] = formatted_df2['neighborhood_overview'].astype(int)
 # formatted_df2['description'] = formatted_df2['description'].astype(int)
 # formatted_df2['host_about'] = formatted_df2['host_about'].astype(int)
@@ -1003,25 +1010,103 @@ df_savetime2 = pd.read_csv('formatted_df2.csv')
 ```
 
 ```{python}
-# 设置Styler来格式化表格
-df_styled1 = df_savetime1.style.format({
-    'price(£)': "{:.2f}",
-    'host_response_rate(%)': "{:.2f}",
-    'host_acceptance_rate(%)': "{:.2f}",
-}).set_properties(**{'text-align': 'center'})
+# # Set up Styler to format tables
+# df_styled1 = df_savetime1.style.format({
+#     'price(£)': "{:.2f}",
+#     'host_response_rate(%)': "{:.2f}",
+#     'host_acceptance_rate(%)': "{:.2f}",
+# }).set_properties(**{'text-align': 'center'})
 
-df_styled1.hide(axis='index')
+# df_styled1.hide(axis='index')
 ```
 
 ```{python}
-# 设置Styler来格式化表格
-df_styled2 = df_savetime2.style.format({
-    'neighborhood_overview': "{:.0f}",
-    'description': "{:.0f}",
-    'host_about': "{:.0f}"
-}).set_properties(**{'text-align': 'center'})
+# # Set up Styler to format tables
+# df_styled2 = df_savetime2.style.format({
+#     'neighborhood_overview': "{:.0f}",
+#     'description': "{:.0f}",
+#     'host_about': "{:.0f}"
+# }).set_properties(**{'text-align': 'center'})
 
-df_styled2.hide(axis='index')
+# df_styled2.hide(axis='index')
+```
+
+```{python}
+df1 = df_savetime1.copy()
+df1.set_index('Level', inplace=True)
+
+# Create a bar chart
+ax = df1[['price(£)']].plot(kind='bar', figsize=(14, 6), color=['#a8dadc'])
+
+# Set title and labels
+ax.set_title('(a) Price', fontsize=16)
+ax.set_xlabel('Level', fontsize=12)
+ax.set_ylabel('Count', fontsize=12)
+
+# Set the x-axis labels to be tilted at 45 degrees
+plt.xticks(rotation=45)
+
+# Set the range of the y-axis
+ax.set_ylim(0, 400)
+
+# Display the legend
+ax.legend(title='Legend')
+
+# Show the plot
+plt.tight_layout()
+plt.show()
+```
+
+```{python}
+df2 = df_savetime1.copy()
+df2.set_index('Level', inplace=True)
+
+# Create a bar chart
+ax = df2[['host_response_rate(%)', 'host_acceptance_rate(%)']].plot(kind='bar', figsize=(14, 6), color=['#0077b6', '#90e0ef'])
+
+# Set title and labels
+ax.set_title('(b) Response rate and acceptance rate', fontsize=16)
+ax.set_xlabel('Level', fontsize=12)
+ax.set_ylabel('Count', fontsize=12)
+
+# Set the x-axis labels to be tilted at 45 degrees
+plt.xticks(rotation=45)
+
+# Set the range of the y-axis
+ax.set_ylim(70, 120)
+
+# Display the legend
+ax.legend(title='Legend')
+
+# Show the plot
+plt.tight_layout()
+plt.show()
+```
+
+```{python}
+df3 = df_savetime2.copy()
+df3.set_index('Level', inplace=True)
+
+# Create a bar chart
+ax = df3.plot(kind='bar', figsize=(14, 6), color=['#023e8a', '#00b4d8', '#ade8f4'])
+
+# Set title and labels
+ax.set_title('(c) The length of three types of descriptive text', fontsize=16)
+ax.set_xlabel('Level', fontsize=12)
+ax.set_ylabel('Count', fontsize=12)
+
+# Set the x-axis labels to be tilted at 45 degrees
+plt.xticks(rotation=45)
+
+# Set the range of the y-axis
+ax.set_ylim(0, 650)
+
+# Display the legend
+ax.legend(title='Legend')
+
+# Show the plot
+plt.tight_layout()
+plt.show()
 ```
 
 ## 6. With reference to the data (*i.e.* using numbers, figures, maps, and descriptive statistics), what does an analysis of Hosts and Listing types suggest about the nature of Airbnb lets in London? 

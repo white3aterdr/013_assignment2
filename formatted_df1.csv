@@ -1,4 +1,4 @@
- ,price(£),host_response_rate(%),host_acceptance_rate(%)
+Level,price(£),host_response_rate(%),host_acceptance_rate(%)
 heat1,288.42,92.21,80.32
 heat2,213.8,95.02,84.78
 heat3,188.66,96.89,89.21
