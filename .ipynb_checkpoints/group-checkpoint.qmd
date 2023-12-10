@@ -1,0 +1,273 @@
+---
+bibliography: bio.bib
+csl: harvard-cite-them-right.csl
+title: Rookie Programmers Group Project
+nocite: '@*'
+execute:
+  echo: false
+format:
+  html:
+    theme:
+      - minty
+      - css/web.scss
+    code-copy: true
+    code-link: true
+    toc: true
+    toc-title: On this page
+    toc-depth: 2
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+  pdf:
+    include-in-header:
+      text: |
+        \addtokomafont{disposition}{\rmfamily}
+    mainfont: Spectral
+    sansfont: Roboto
+    monofont: JetBrainsMono-Regular
+    papersize: a4
+    geometry:
+      - top=25mm
+      - left=40mm
+      - right=30mm
+      - bottom=25mm
+      - heightrounded
+    toc: false
+    number-sections: false
+    colorlinks: true
+    highlight-style: github
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .qmd
+      format_name: quarto
+      format_version: '1.0'
+      jupytext_version: 1.15.2
+  kernelspec:
+    display_name: Python 3 (ipykernel)
+    language: python
+    name: python3
+---
+
+## Declaration of Authorship {.unnumbered .unlisted}
+
+We, Rookie Programmers, confirm that the work presented in this assessment is our own. Where information has been derived from other sources, we confirm that this has been indicated in the work. Where a Large Language Model such as ChatGPT has been used we confirm that we have made its contribution to the final submission clear.
+
+Date: 2023/12/06
+
+Student Numbers: 23148316/
+
+## Brief Group Reflection
+
+| What Went Well | What Was Challenging |
+| -------------- | -------------------- |
+| A              | B                    |
+| C              | D                    |
+
+## Priorities for Feedback
+
+Are there any areas on which you would appreciate more detailed feedback if we're able to offer it?
+
+```{=html}
+<style type="text/css">
+.duedate {
+  border: dotted 2px red; 
+  background-color: rgb(255, 235, 235);
+  height: 50px;
+  line-height: 50px;
+  margin-left: 40px;
+  margin-right: 40px
+  margin-top: 10px;
+  margin-bottom: 10px;
+  color: rgb(150,100,100);
+  text-align: center;
+}
+</style>
+```
+
+{{< pagebreak >}}
+
+# Response to Questions
+
+```{python}
+import os
+import requests
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.colors as colors
+import seaborn as sns
+import geopandas as gpd
+from shapely.geometry import Point
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+```
+
+```{python}
+import warnings
+warnings.filterwarnings('ignore')
+```
+
+```{python}
+# 确认数据文件是否存在，如无则下载
+file_gz = 'listings.csv.gz'
+url_gz = 'https://github.com/white3aterdr/013_assignment2/raw/main/listings.csv.gz'
+
+if os.path.exists(file_gz):
+    data = pd.read_csv(file_gz, compression='gzip', encoding='ISO-8859-1', dtype={68: str}, low_memory=False)
+else: 
+    data = pd.read_csv(url_gz, compression='gzip', encoding='ISO-8859-1', dtype={68: str}, low_memory=False)
+    data.to_csv(file_gz)
+
+# 确认参考文献文件是否存在，如无则下载
+file_bib = "bio.bib"
+url_bib = "https://github.com/white3aterdr/013_assignment2/raw/main/bio.bib"
+
+if not os.path.exists(file_bib):
+    response = requests.get(url_bib)
+    with open(file_bib, "wb") as file:
+        file.write(response.content)
+
+# 确认格式文件是否存在，如无则下载
+file_csl = "harvard-cite-them-right.csl"
+url_csl = "https://github.com/white3aterdr/013_assignment2/raw/main/harvard-cite-them-right.csl"
+
+if not os.path.exists(file_csl):
+    response = requests.get(url_csl)
+    with open(file_csl, "wb") as file:
+        file.write(response.content)
+
+# 确认地理文件是否存在，如无则下载
+file_gpkg = "Boroughs.gpkg"
+url_gpkg = "https://github.com/white3aterdr/013_assignment2/raw/main/Boroughs.gpkg"
+
+if not os.path.exists(file_gpkg):
+    response = requests.get(url_gpkg)
+    with open(file_gpkg, "wb") as file:
+        file.write(response.content)
+```
+
+## 1. Who collected the data?
+
+The data from insideairbnb website [@noauthor_home_nodate] were collected by the Inside Airbnb project, with contributions from a variety of collaborators and partners.
+
+The raw data were compiled from the Airbnb website [@noauthor_airbnb_nodate-1], which was collected by the company Airbnb, Inc.
+
+
+## 2. Why did they collect it?
+
+On the insideairbnb website [@noauthor_about_nodate], they write:
+
+>"We work towards a vision where communities are empowered with data and information to understand, decide and control the role of renting residential homes to tourists".
+
+As for the company Airbnb, three considerations may arise：
+  
+- Operational aspect: The primary goal is to assist users in making informed decisions-  
+
+- Company aspect: Data collection plays a crucial role in analyzing Airbnb's operational performance across various cities. With the gathered data, Airbnb can fine-tune its operational strategies.
+
+- Legal aspect: In compliance with diverse regulatory requirements, Airbnb must furnish information to the respective authorities as necessary.
+
+
+## 3. How was the data collected?  
+
+Insideairbnb collected data, which was a snapshot at a particular time, from Airbnb platform.
+
+The data collected by Airbnb can be classified along two dimensions: the data source and the method of generation. 
+
+#### From host: 
+
+- Objective data. These data were provided by hosts but can be verified through photos or qualifications. And some data can also be automatically obtained based on user-provided GPS location. Such as listing data: latitude, longitude, property_type, room_type, etc. Host data: host_name, host_location, host_neighbourhood, etc.
+
+- Generated during the operation of the platform. These data were generated by the platform during its operation, but its content depends on the behavior of the host. Such as host_acceptance_rate, host_response_rate, host_is_superhost, etc.
+
+- Subjective data. These data were provided by the host and were very subjective description, and its content and tendency depend on the host's own preferences. Such as description, neighborhood_overview, host_about, etc.
+
+#### From guest: 
+
+- Objective data. When guest register an Airbnb account, they need to provide personal information such as name, contact details, payment information, etc.
+
+- Generated during the operation of the platform. These data were generated by the platform, but its content depends on the behavior of the guest. Such as number_of_reviews, first_review, last_review, etc.
+
+- Subjective data. These data were provided by the guest, depends on guest preference. Such as review_scores_accuracy, review_scores_cleanliness, comments, etc.
+
+#### From platform: 
+
+- Generated during the operation of the platform. These data were automatically generated by Airbnb and the user's behavior has no impact on it. Such as host_id, host_url, reviewer_id, etc. And the platform does not proactively provide objective or subjective data.
+
+
+## 4. How does the method of collection impact the completeness and/or accuracy of its representation of the process it seeks to study, and what wider issues does this raise?
+
+#### Completeness:
+
+- For insideairbnb data, as it is a snapshot of the Airbnb platform at a particular moment, it cannot reflect changing information.
+
+- Regarding the original data on Airbnb, if the collection relies on voluntary submissions (such as reviews from Airbnb hosts and guests), it might not be possible to gather data from all relevant individuals. Self-selection bias could lead to incomplete data, as only certain groups may be willing or able to provide information.
+
+#### Accuracy: 
+
+- Objective data, such as geographical location, are usually accurate and reliable.
+
+- Data generated by the platform might be accurate but can also be subject to technical errors. However, in cases of data manipulation, such as fake reviews or artificially inflating booking numbers, there is a possibility of introducing misleading metrics for listing evaluation.
+
+- The completeness and accuracy of subjectively provided information depend on the provider's expertise as well as their willingness to share accurate details. For hosts, varying levels of professional experience may result in significantly different expressions even for descriptions of the same listing. Hosts with less experience may overlook advantages or omit points that potential guests are concerned about. On the other hand, experienced landlords can better highlight attractive features, while those with deceptive intentions may conceal certain flaws. For guests, they come from diverse backgrounds and have different judgment criteria, leading to listing evaluations being more relative to their own perceptions. A detail highly valued by one user may go unnoticed by another, resulting in a skewed evaluation. 
+
+
+## 5. What ethical considerations does the use of this data raise? 
+
+#### Privacy and Security: 
+
+- Privacy Concerns: Personal data, such as names, contact information, and payment details, are sensitive. How this data is collected, stored, and used is a significant privacy concern. Users must be informed about what data is collected and how it will be used, and their consent should be obtained, particularly for data that could be used to identify them. There have already been news reports that some landlords are discontent with the platform's requirement to upload photos.
+
+- Data Security and Usage Control: Keeping data safe from unauthorized access and breaches is crucial. Ethical considerations mean implementing strong security measures to protect user data from cyber threats. Also, it's vital to make sure that data collected for one purpose isn't used inappropriately without the user's clear permission. This includes avoiding sharing data with others or using it for undisclosed reasons.
+
+#### Bias and Discrimination: 
+
+- The data collection process and analysis methods may inadvertently create bias or overlook certain groups. Such as the feelings and needs of groups that lack the willingness to comment.
+
+- Data collected from user reviews or host descriptions may reflect personal biases. This could lead to discrimination against certain groups based on race, gender, age, or other factors. Ethical use of data requires mechanisms to identify and mitigate such biases.
+
+- The Matthew effect brought about by the popularity mechanism, such as Superhosts, etc. This inequality may result in popular listings being in short supply, while unpopular listings remain uninterested.
+
+#### Distortion and Misleading: 
+
+- Differences in host capabilities may lead to distortions in the photos or descriptions provided, ultimately misrepresenting the true status of the listing. This discrepancy can prevent the data from accurately reflecting the information, making it challenging for guests to gain a precise understanding of the listing's quality.
+
+- Intentional misleading, such as fake photos and fake reviews, may mislead users. It can also produce erroneous results for data analysis. This requires the platform to set up mechanisms to discover and eliminate it, and set corresponding punitive measures.
+
+#### Impact on Communities: 
+
+- When utilizing data for research, analysis, and descriptions of communities, it's essential to acknowledge that the produced data may only offer a partial reflection of the status of certain communities, not encompassing all aspects. However, the release of these findings can have diverse impacts on the community, including external evaluations, rent fluctuations, effects on residents' lives, and socioeconomic stratification. Therefore, careful consideration of the potential consequences arising from the use of such data is paramount.
+
+```{python}
+# 确认数据内容
+# data.shape
+```
+
+```{python}
+# 确认数据内容
+# data.info()
+```
+
+```{python}
+#| results: hide
+```{python .hide-output}
+# 数据清洗step1 查看每列缺失值个数并按照降序排序
+data.loc[:, data.isnull().sum() > 0].isnull().sum().sort_values(ascending=False)
+```
+
+```{python}
+#| results: hide
+```{python .hide-output}
+# 数据清洗step2：查看每列内容为0或基本无变化的列
+data.loc[:, data.nunique() <= 1].nunique().sort_values()
+```
+
+## 6. With reference to the data (*i.e.* using numbers, figures, maps, and descriptive statistics), what does an analysis of Hosts and Listing types suggest about the nature of Airbnb lets in London? 
+
+
+
+## 7. Drawing on your previous answers, and supporting your response with evidence (e.g. figures, maps, and statistical analysis/models), how *could* this data set be used to inform the regulation of Short-Term Lets (STL) in London? 
+
+
+
+## References

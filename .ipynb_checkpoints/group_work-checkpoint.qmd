@@ -95,9 +95,16 @@ import requests
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 import seaborn as sns
 import geopandas as gpd
 from shapely.geometry import Point
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+```
+
+```{python}
+import warnings
+warnings.filterwarnings('ignore')
 ```
 
 ```{python}
@@ -243,12 +250,12 @@ The data collected by Airbnb can be classified along two dimensions: the data so
 
 ```{python}
 # 数据清洗step1 查看每列缺失值个数并按照降序排序
-data.loc[:, data.isnull().sum() > 0].isnull().sum().sort_values(ascending=False)
+data.loc[:, data.isnull().sum() > 0].isnull().sum().sort_values(ascending=False);
 ```
 
 ```{python}
 # 数据清洗step2：查看每列内容为0或基本无变化的列
-data.loc[:, data.nunique() <= 1].nunique().sort_values()
+data.loc[:, data.nunique() <= 1].nunique().sort_values();
 ```
 
 ```{python}
@@ -296,7 +303,8 @@ selected_boroughs = [
     'Southwark', 
     'Tower Hamlets', 
     'Wandsworth', 
-    'Westminster'
+    'Westminster',
+    'City of London'
 ]
 
 # 创建一个指示每个点是否位于选定区的布尔序列
@@ -327,8 +335,10 @@ plt.show()
 # 用过滤后的数据覆盖原有的 DataFrame
 # 在这里更换变量名，避免后续更改代码导致需要从最初读取data耗费时间过长
 data_2 = data[in_selected_borough].copy()
+```
 
-# 覆盖保存原有的 CSV 文件
+```{python}
+# # 覆盖保存原有的 CSV 文件
 # data_2.to_csv('clean_listings_1.csv', index=False)
 ```
 
@@ -337,7 +347,7 @@ data_2 = data[in_selected_borough].copy()
 ```
 
 ```{python}
-# 删除之后品质评级和热度评级中包含缺失值的行
+# 删除之后满意度评级和热度评级中包含缺失值的行
 columns_to_check = [
     'review_scores_accuracy', 
     'review_scores_cleanliness', 
@@ -348,8 +358,6 @@ columns_to_check = [
     'last_review',
     'first_review',
     'number_of_reviews',
-    'availability_365',
-    'availability_90',
     'availability_60',
     'availability_30',
 ]
@@ -389,9 +397,11 @@ data_2['occupancy_rate'] = ((30 - data_2['availability_30']) / 30)
 
 # 将 occupancy_rate 和 reviews_per_day 数值加权相加，其中评论数结合留评率概念，取10倍权重
 data_2['combined_value'] = data_2['occupancy_rate'] + 10*data_2['reviews_per_day']
+```
 
-result_columns = ['number_of_reviews', 'operating_days', 'reviews_per_day', 'occupancy_rate', 'combined_value']
-print(data_2[result_columns].head())
+```{python}
+# result_columns = ['number_of_reviews', 'operating_days', 'reviews_per_day', 'occupancy_rate', 'combined_value']
+# print(data_2[result_columns].head())
 ```
 
 ```{python}
@@ -400,9 +410,10 @@ data_2['super_host_rate'] = data_2.apply(
     lambda row: row['combined_value'] + 0.5 if row['host_is_superhost'] == 't' else row['combined_value'],
     axis=1
 )
+```
 
-# 查看结果
-print(data_2[['host_is_superhost', 'combined_value', 'super_host_rate']].head())
+```{python}
+# print(data_2[['host_is_superhost', 'combined_value', 'super_host_rate']].head())
 ```
 
 ```{python}
@@ -418,8 +429,6 @@ print(data_2[['host_is_superhost', 'combined_value', 'super_host_rate']].head())
 ```
 
 ```{python}
-# [之前的代码片段来计算 reviews_per_day 和 reviews_per_day_super_host]
-
 # 假设使用固定数值作为阈值来分热度，这里我们需要五个阈值分成六个区间
 dimension_1 = data_2.sort_values(by='super_host_rate',ascending=False)
 
@@ -444,20 +453,20 @@ star_rating_counts = data_2['star_rating'].value_counts()
 star_rating_counts_sorted = star_rating_counts.sort_index()
 
 # 打印热度个数统计
-print(star_rating_counts_sorted)
+# print(star_rating_counts_sorted)
 ```
 
 ```{python}
-# 维度2：品质
+# 维度2：满意度
 # 加权依据：https://medium.com/@labdmitriy/exploring-airbnb-guest-reviews-in-london-682b45aba34e中问题1和问题2的结论
 # 定义加权平均的权重
 weights = {
     'review_scores_accuracy': 1.5,
-    'review_scores_cleanliness': 1,
-    'review_scores_checkin': 1.5,
-    'review_scores_communication': 1.5,
-    'review_scores_location': 2.0,
-    'review_scores_value': 1.5
+    'review_scores_cleanliness': 2,
+    'review_scores_checkin': 1,
+    'review_scores_communication': 1,
+    'review_scores_location': 0.5,
+    'review_scores_value': 1
 }
 
 # 定义评分列的列表
@@ -483,7 +492,7 @@ def weighted_average(row):
 data_2['weighted_score'] = data_2.apply(weighted_average, axis=1)
 sorted_data_descending = data_2.sort_values(by='weighted_score',ascending=False)
 
-# 定义品质等级的函数
+# 定义满意度等级的函数
 def satisfaction_level(weighted_score):
     if weighted_score >= sorted_data_descending.weighted_score.quantile(0.80) :
         return 5
@@ -496,58 +505,32 @@ def satisfaction_level(weighted_score):
     else:
         return 1
 
-# 应用品质等级计算函数
+# 应用满意度等级计算函数
 data_2['satisfaction_level'] = data_2['weighted_score'].apply(satisfaction_level)
 
-# 显示所有的品质等级
+# 显示所有的满意度等级
 #print(data_2['satisfaction_level'].tolist())
-print(data_2['satisfaction_level'].value_counts())
+# print(data_2['satisfaction_level'].value_counts())
 ```
 
 ```{python}
-# Save to a new CSV file
-# 在本地IDE中生成名为Clean_listings的数据清洗整理和评级后的csv
+# # 在本地IDE中生成名为Clean_listings的数据清洗整理和评级后的csv
+# corrected_classified_file_name = 'clean_listings_2.csv'
+# data_2.to_csv(corrected_classified_file_name, index=False)
 
-#corrected_classified_file_name = 'clean_listings_2.csv'
-#data_2.to_csv(corrected_classified_file_name, index=False)
-
-# Print the file save path
-#print(f"Corrected classified listings file saved as: {corrected_classified_file_name}")
-```
-
-```{python}
-print(gdf_points_new['star_rating'].describe())
-```
-
-```{python}
-print(gdf_quality['satisfaction_level'].describe())
+# # Print the file save path
+# print(f"Corrected classified listings file saved as: {corrected_classified_file_name}")
 ```
 
 ```{python}
 # 加载伦敦区域的GeoPackage文件
 gdf_boroughs_new = gpd.read_file('Boroughs.gpkg', layer='boroughs')
-
-# 假设 data_2 已经包含了经纬度信息和 'star_rating' 列
 geometry = [Point(xy) for xy in zip(data_2['longitude'], data_2['latitude'])]
 gdf_points_new = gpd.GeoDataFrame(data_2, geometry=geometry)
 
 # 设置坐标参考系统(CRS)
 gdf_points_new.crs = "EPSG:4326"  # 假设原始点数据是WGS84
 gdf_points_new = gdf_points_new.to_crs(gdf_boroughs_new.crs)
-
-# 绘制伦敦区域
-#fig, ax = plt.subplots(figsize=(12, 8))
-#gdf_boroughs_new.plot(ax=ax, color='lightgrey')
-
-# 绘制点，使用评级信息来改变颜色
-#gdf_points_new.plot(ax=ax, column='star_rating', cmap='viridis', legend=True, markersize=50)
-
-# 添加图例和标题
-#plt.legend(title='Star Rating')
-#plt.title('Star Ratings in London')
-
-# 显示结果
-#plt.show()
 ```
 
 ```{python}
@@ -557,24 +540,10 @@ gdf_quality = gpd.GeoDataFrame(data_2, geometry=geometry)
 # 设置坐标参考系统(CRS)
 gdf_quality.crs = "EPSG:4326"
 gdf_quality = gdf_quality.to_crs(gdf_boroughs_new.crs)
-
-# 绘制伦敦区域
-#fig, ax = plt.subplots(figsize=(12, 8))
-#gdf_boroughs_new.plot(ax=ax, color='lightgrey')
-
-# 绘制点，根据 'satisfaction_level' 改变颜色
-#gdf_quality.plot(ax=ax, column='satisfaction_level', cmap='viridis', legend=True, markersize=50)
-
-# 添加图例和标题
-#plt.legend(title='Satisfaction Level')
-#plt.title('Satisfaction Levels in London')
-
-# 显示结果
-#plt.show()
 ```
 
 ```{python}
-# 创建包含两个子图的画布，这里的 figsize 需要根据实际情况调整
+# 创建包含两个子图的画布
 fig, axs = plt.subplots(1, 2, figsize=(20, 10))
 
 # 调整子图之间的间距来为图例留出空间
@@ -582,20 +551,36 @@ plt.subplots_adjust(wspace=0.3)
 
 # 第一个子图：热度评分
 gdf_boroughs_new.plot(ax=axs[0], color='white', edgecolor='lightgrey')
-scatter1 = gdf_points_new.plot(ax=axs[0], column='star_rating', cmap='viridis', markersize=1)
+scatter1 = gdf_points_new.plot(ax=axs[0], column='star_rating', cmap='viridis', markersize=3)
 
-# 第二个子图：品质等级
+# 第二个子图：满意度等级
 gdf_boroughs_new.plot(ax=axs[1], color='white', edgecolor='lightgrey')
-scatter2 = gdf_quality.plot(ax=axs[1], column='satisfaction_level', cmap='viridis', markersize=1)
+scatter2 = gdf_quality.plot(ax=axs[1], column='satisfaction_level', cmap='viridis', markersize=3)
 
-# 添加图例，位于图的右侧
-fig.colorbar(scatter1.get_children()[0], ax=axs, orientation='vertical', fraction=0.02, pad=0.02)
+# 为图例创建一个 ScalarMappable 对象
+norm = colors.Normalize(vmin=gdf_points_new['star_rating'].min(), vmax=gdf_points_new['star_rating'].max())
+sm1 = plt.cm.ScalarMappable(cmap='viridis', norm=norm)
+sm1.set_array([])
+
+# 添加第一个子图的图例
+divider = make_axes_locatable(axs[0])
+cax = divider.append_axes("right", size="5%", pad=0.1)
+fig.colorbar(sm1, cax=cax)
+
+# 为第二个图例重复相同步骤
+norm = colors.Normalize(vmin=gdf_quality['satisfaction_level'].min(), vmax=gdf_quality['satisfaction_level'].max())
+sm2 = plt.cm.ScalarMappable(cmap='viridis', norm=norm)
+sm2.set_array([])
+
+divider = make_axes_locatable(axs[1])
+cax = divider.append_axes("right", size="5%", pad=0.1)
+fig.colorbar(sm2, cax=cax)
 
 # 设置标题
-axs[0].set_title('Popular Levels in London')
-axs[1].set_title('Quality Levels in London')
+axs[0].set_title('(a) Heat Levels in London')
+axs[1].set_title('(b) Satisfaction Levels in London')
 
-# 需要调整显示范围以只显示点的分布区域
+# 调整显示范围以只显示点的分布区域
 xmin, ymin, xmax, ymax = gdf_points_new.total_bounds
 axs[0].set_xlim([xmin, xmax])
 axs[0].set_ylim([ymin, ymax])
@@ -606,6 +591,110 @@ axs[1].set_ylim([ymin, ymax])
 
 # 显示结果
 plt.show()
+```
+
+```{python}
+# 筛选出满足条件的点
+red_points = gdf_points_new[(gdf_points_new['star_rating'] == 5) & (gdf_points_new['satisfaction_level'] == 1)]
+red_points_all = gdf_points_new[(gdf_points_new['star_rating'] == 5)]
+cyan_points = gdf_points_new[(gdf_points_new['star_rating'] == 1) & (gdf_points_new['satisfaction_level'] == 5)]
+cyan_points_all = gdf_points_new[(gdf_points_new['satisfaction_level'] == 5)]
+
+# Create the figure and subplots
+fig, axs = plt.subplots(1, 2, figsize=(20, 10), sharex=True, sharey=True)
+
+# Plot the boroughs as the base layer for both subplots
+gdf_boroughs.plot(ax=axs[0], color='white', edgecolor='lightgrey')
+gdf_boroughs.plot(ax=axs[1], color='white', edgecolor='lightgrey')
+
+# Plot the red and cyan points on their respective subplots
+red_points_all.plot(ax=axs[0], color='mistyrose', markersize=3)
+red_points.plot(ax=axs[0], color='red', markersize=3)
+cyan_points_all.plot(ax=axs[1], color='lightblue', markersize=3)
+cyan_points.plot(ax=axs[1], color='dodgerblue', markersize=3)
+
+# Set the titles for both subplots
+axs[0].set_title('(c) "Heat5" with highlighted "Satisfaction1"')
+axs[1].set_title('(d) "Heat1" with highlighted "Satisfaction5"')
+
+# Determine the combined bounds of both datasets
+xmin = min(red_points.total_bounds[0], cyan_points.total_bounds[0])
+ymin = min(red_points.total_bounds[1], cyan_points.total_bounds[1])
+xmax = max(red_points.total_bounds[2], cyan_points.total_bounds[2])
+ymax = max(red_points.total_bounds[3], cyan_points.total_bounds[3])
+
+# 调整显示范围以只显示点的分布区域
+xmin, ymin, xmax, ymax = gdf_points_new.total_bounds
+axs[0].set_xlim([xmin, xmax])
+axs[0].set_ylim([ymin, ymax])
+
+xmin, ymin, xmax, ymax = gdf_quality.total_bounds
+axs[1].set_xlim([xmin, xmax])
+axs[1].set_ylim([ymin, ymax])
+
+# Ensure the aspect ratio is the same for both subplots
+axs[0].set_aspect('equal', adjustable='box')
+axs[1].set_aspect('equal', adjustable='box')
+
+# Show the plots
+plt.show()
+```
+
+```{python}
+# print(red_points.count())
+# print(red_points_all.count())
+# print(cyan_points.count())
+# print(cyan_points_all.count())
+```
+
+```{python}
+# red_points['price'] = red_points['price'].replace('[\$,]', '', regex=True).astype(float)
+# print(red_points['price'].describe())
+
+# red_points_all['price'] = red_points_all['price'].replace('[\$,]', '', regex=True).astype(float)
+# print(red_points_all['price'].describe())
+
+# cyan_points['price'] = cyan_points['price'].replace('[\$,]', '', regex=True).astype(float)
+# print(cyan_points['price'].describe())
+
+# cyan_points_all['price'] = cyan_points_all['price'].replace('[\$,]', '', regex=True).astype(float)
+# print(cyan_points_all['price'].describe())
+```
+
+```{python}
+# # 筛选出满足条件的点
+# red_points = gdf_points_new[(gdf_points_new['star_rating'] == 5) & (gdf_points_new['satisfaction_level'] == 1)]
+# cyan_points = gdf_points_new[(gdf_points_new['star_rating'] == 1) & (gdf_points_new['satisfaction_level'] == 5)]
+
+# # 创建画布
+# fig, ax = plt.subplots(figsize=(10, 10))
+
+# # 绘制点
+# gdf_boroughs.plot(ax=ax, color='white', edgecolor='lightgrey')
+# red_points.plot(ax=ax, color='red', markersize=10, label='Heat: 5, Quality: 1')
+# cyan_points.plot(ax=ax, color='cyan', markersize=10, label='Heat: 1, Quality: 5')
+
+# # 设置标题
+# ax.set_title('Special Points in London')
+
+# # 调整显示范围
+# xmin, ymin, xmax, ymax = gdf_points_new.total_bounds
+# ax.set_xlim([xmin, xmax])
+# ax.set_ylim([ymin, ymax])
+
+# # 添加图例
+# ax.legend()
+
+# # 显示结果
+# plt.show()
+```
+
+```{python}
+# print(gdf_quality['satisfaction_level'].describe())
+```
+
+```{python}
+# print(gdf_points_new['star_rating'].describe())
 ```
 
 ## 6. With reference to the data (*i.e.* using numbers, figures, maps, and descriptive statistics), what does an analysis of Hosts and Listing types suggest about the nature of Airbnb lets in London? 
