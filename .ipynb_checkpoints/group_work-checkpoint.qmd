@@ -144,6 +144,24 @@ if not os.path.exists(file_gpkg):
     response = requests.get(url_gpkg)
     with open(file_gpkg, "wb") as file:
         file.write(response.content)
+
+# 确认csv文件是否存在，如无则下载
+file1_csv = "formatted_df1.csv"
+url1_csv = "https://github.com/white3aterdr/013_assignment2/raw/main/formatted_df1.csv"
+
+if not os.path.exists(file1_csv):
+    response = requests.get(url1_csv)
+    with open(file1_csv, "wb") as file:
+        file.write(response.content)
+
+# 确认csv文件是否存在，如无则下载
+file2_csv = "formatted_df2.csv"
+url2_csv = "https://github.com/white3aterdr/013_assignment2/raw/main/formatted_df2.csv"
+
+if not os.path.exists(file2_csv):
+    response = requests.get(url2_csv)
+    with open(file2_csv, "wb") as file:
+        file.write(response.content)
 ```
 
 ## 1. Who collected the data?
@@ -239,32 +257,29 @@ The data collected by Airbnb can be classified along two dimensions: the data so
 - When utilizing data for research, analysis, and descriptions of communities, it's essential to acknowledge that the produced data may only offer a partial reflection of the status of certain communities, not encompassing all aspects. However, the release of these findings can have diverse impacts on the community, including external evaluations, rent fluctuations, effects on residents' lives, and socioeconomic stratification. Therefore, careful consideration of the potential consequences arising from the use of such data is paramount.
 
 ```{python}
-# 确认数据内容
 # data.shape
 ```
 
 ```{python}
-# 确认数据内容
 # data.info()
 ```
 
 ```{python}
-# 数据清洗step1 查看每列缺失值个数并按照降序排序
+# 数据清洗step1： 查看每列缺失值个数并按照降序排序
 data.loc[:, data.isnull().sum() > 0].isnull().sum().sort_values(ascending=False);
 ```
 
 ```{python}
-# 数据清洗step2：查看每列内容为0或基本无变化的列
+# 数据清洗step2： 查看每列内容为0或基本无变化的列
 data.loc[:, data.nunique() <= 1].nunique().sort_values();
 ```
 
 ```{python}
-# 根据以上两个数据清洗代码，删除不需要的列
+# 根据以上结果清洗数据，删除不需要的列
 data = data.drop(columns=['scrape_id', 'calendar_updated', 'neighbourhood_group_cleansed', 'license', 'bathrooms'])
 ```
 
 ```{python}
-# 过滤掉last review在2019年以前的行
 # 确保 'last_review' 列是日期时间格式
 data['last_review'] = pd.to_datetime(data['last_review'], errors='coerce')
 
@@ -273,7 +288,6 @@ data = data[data['last_review'].dt.year >= 2019]
 ```
 
 ```{python}
-# 确认操作结果
 # data.info()
 ```
 
@@ -287,11 +301,11 @@ gdf_boroughs = gpd.read_file('Boroughs.gpkg', layer='boroughs')
 geometry = [Point(xy) for xy in zip(data['longitude'], data['latitude'])]
 gdf_points = gpd.GeoDataFrame(data, geometry=geometry)
 
-# 确保点的CRS与区域的CRS相同
-gdf_points.crs = "EPSG:4326"  # 假设原始点数据是WGS84
+# 确保点的CRS与地图的CRS相同
+gdf_points.crs = "EPSG:4326"
 data = gdf_points.to_crs(gdf_boroughs.crs)
 
-# 筛选Inner London的区域
+# 保留的行政区
 selected_boroughs = [
     'Camden', 
     'Hackney', 
@@ -311,12 +325,12 @@ selected_boroughs = [
 in_selected_borough = data.apply(lambda x: any(borough.contains(x.geometry) for borough in gdf_boroughs[gdf_boroughs['NAME'].isin(selected_boroughs)].geometry), axis=1)
 
 # 创建并列的两张地图
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 10), facecolor='white')  # 设置图表底色为淡米黄色
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 10), facecolor='white') 
 
 # 绘制左侧地图：未经筛选的数据
-gdf_boroughs.plot(ax=ax1, color='white', edgecolor='grey', linewidth=0.6)  # 米黄色填充，灰色边界，外围边界加粗
-data.plot(ax=ax1, color='deepskyblue', markersize=1, alpha=0.5)  # 增加点的透明度
-ax1.axis('off')  # 不显示坐标轴
+gdf_boroughs.plot(ax=ax1, color='white', edgecolor='grey', linewidth=0.6)
+data.plot(ax=ax1, color='deepskyblue', markersize=1, alpha=0.5)
+ax1.axis('off')
 
 # 绘制右侧地图：筛选后的数据
 gdf_boroughs.plot(ax=ax2, color='white', edgecolor='grey', linewidth=0.6)
@@ -332,13 +346,12 @@ plt.show()
 ```
 
 ```{python}
-# 用过滤后的数据覆盖原有的 DataFrame
 # 在这里更换变量名，避免后续更改代码导致需要从最初读取data耗费时间过长
 data_2 = data[in_selected_borough].copy()
 ```
 
 ```{python}
-# # 覆盖保存原有的 CSV 文件
+# # 保存CSV文件
 # data_2.to_csv('clean_listings_1.csv', index=False)
 ```
 
@@ -347,7 +360,7 @@ data_2 = data[in_selected_borough].copy()
 ```
 
 ```{python}
-# 删除之后满意度评级和热度评级中包含缺失值的行
+# 找到之后满意度评级和热度评级中包含缺失值的行
 columns_to_check = [
     'review_scores_accuracy', 
     'review_scores_cleanliness', 
@@ -381,10 +394,10 @@ data_2['first_review'] = pd.to_datetime(data_2['first_review'])
 # 计算日期差并转换为天数
 data_2['operating_days'] = (data_2['last_review'] - data_2['first_review']).dt.days
 
-# 避免除以零，我们可以给分母加上一个小的数值，如 0.1，或者直接过滤掉这些行
+# 避免除以零，我们可以给分母加上一个小的数值，如 0.1，在这里我们选择直接过滤掉这些行
 data_2 = data_2[data_2['operating_days'] > 0]
 
-# 计算reviews per day，考虑不可用的天数
+# 计算reviews per day
 data_2['reviews_per_day'] = data_2['number_of_reviews'] / (data_2['operating_days'])
 
 # 删除reviews per day > 1 的数据
@@ -392,7 +405,7 @@ data_2 = data_2[data_2['reviews_per_day'] <= 1]
 ```
 
 ```{python}
-#计算月入住率
+# 计算月入住率
 data_2['occupancy_rate'] = ((30 - data_2['availability_30']) / 30) 
 
 # 将 occupancy_rate 和 reviews_per_day 数值加权相加，其中评论数结合留评率概念，取10倍权重
@@ -432,7 +445,6 @@ data_2['super_host_rate'] = data_2.apply(
 # 假设使用固定数值作为阈值来分热度，这里我们需要五个阈值分成六个区间
 dimension_1 = data_2.sort_values(by='super_host_rate',ascending=False)
 
-
 thresholds = [dimension_1.super_host_rate.quantile(0.00),
               dimension_1.super_host_rate.quantile(0.20), 
               dimension_1.super_host_rate.quantile(0.40), 
@@ -442,23 +454,27 @@ thresholds = [dimension_1.super_host_rate.quantile(0.00),
 labels = [1, 2, 3, 4, 5]  # 五个热度标签
 
 # 分配热度
-data_2['star_rating'] = pd.cut(data_2['super_host_rate'], bins=thresholds, labels=labels, include_lowest=True)
+data_2['heat_level'] = pd.cut(data_2['super_host_rate'], bins=thresholds, labels=labels, include_lowest=True)
 ```
 
 ```{python}
-# 假设热度已经被计算并分配到 'star_rating' 列中
-star_rating_counts = data_2['star_rating'].value_counts()
+# 假设热度已经被计算并分配到 'heat_level' 列中
+heat_level_counts = data_2['heat_level'].value_counts()
 
-# 按照热度排序，如果有必要的话
-star_rating_counts_sorted = star_rating_counts.sort_index()
+# 按照热度排序
+heat_level_counts_sorted = heat_level_counts.sort_index()
 
 # 打印热度个数统计
-# print(star_rating_counts_sorted)
+# print(heat_level_counts_sorted)
 ```
 
 ```{python}
+# 这段代码运行时间较长
+
 # 维度2：满意度
-# 加权依据：https://medium.com/@labdmitriy/exploring-airbnb-guest-reviews-in-london-682b45aba34e中问题1和问题2的结论
+
+# 加权参考：https://medium.com/@labdmitriy/exploring-airbnb-guest-reviews-in-london-682b45aba34e中问题1和问题2的结论
+
 # 定义加权平均的权重
 weights = {
     'review_scores_accuracy': 1.5,
@@ -478,6 +494,7 @@ score_columns = [
     'review_scores_location', 
     'review_scores_value'
 ]
+
 # 将评分列转换为浮点数
 for col in score_columns:
     data_2[col] = pd.to_numeric(data_2[col], errors='coerce')  # 将无法转换的值设置为 NaN
@@ -507,14 +524,15 @@ def satisfaction_level(weighted_score):
 
 # 应用满意度等级计算函数
 data_2['satisfaction_level'] = data_2['weighted_score'].apply(satisfaction_level)
+```
 
-# 显示所有的满意度等级
-#print(data_2['satisfaction_level'].tolist())
+```{python}
+# # 显示所有的满意度等级
+# print(data_2['satisfaction_level'].tolist())
 # print(data_2['satisfaction_level'].value_counts())
 ```
 
 ```{python}
-# # 在本地IDE中生成名为Clean_listings的数据清洗整理和评级后的csv
 # corrected_classified_file_name = 'clean_listings_2.csv'
 # data_2.to_csv(corrected_classified_file_name, index=False)
 
@@ -523,13 +541,17 @@ data_2['satisfaction_level'] = data_2['weighted_score'].apply(satisfaction_level
 ```
 
 ```{python}
+# Switch
+```
+
+```{python}
 # 加载伦敦区域的GeoPackage文件
 gdf_boroughs_new = gpd.read_file('Boroughs.gpkg', layer='boroughs')
 geometry = [Point(xy) for xy in zip(data_2['longitude'], data_2['latitude'])]
 gdf_points_new = gpd.GeoDataFrame(data_2, geometry=geometry)
 
-# 设置坐标参考系统(CRS)
-gdf_points_new.crs = "EPSG:4326"  # 假设原始点数据是WGS84
+# 设置CRS
+gdf_points_new.crs = "EPSG:4326"
 gdf_points_new = gdf_points_new.to_crs(gdf_boroughs_new.crs)
 ```
 
@@ -537,7 +559,7 @@ gdf_points_new = gdf_points_new.to_crs(gdf_boroughs_new.crs)
 geometry = [Point(xy) for xy in zip(data_2['longitude'], data_2['latitude'])]
 gdf_quality = gpd.GeoDataFrame(data_2, geometry=geometry)
 
-# 设置坐标参考系统(CRS)
+# 设置CRS
 gdf_quality.crs = "EPSG:4326"
 gdf_quality = gdf_quality.to_crs(gdf_boroughs_new.crs)
 ```
@@ -551,14 +573,14 @@ plt.subplots_adjust(wspace=0.3)
 
 # 第一个子图：热度评分
 gdf_boroughs_new.plot(ax=axs[0], color='white', edgecolor='lightgrey')
-scatter1 = gdf_points_new.plot(ax=axs[0], column='star_rating', cmap='viridis', markersize=3)
+scatter1 = gdf_points_new.plot(ax=axs[0], column='heat_level', cmap='viridis', markersize=3)
 
 # 第二个子图：满意度等级
 gdf_boroughs_new.plot(ax=axs[1], color='white', edgecolor='lightgrey')
 scatter2 = gdf_quality.plot(ax=axs[1], column='satisfaction_level', cmap='viridis', markersize=3)
 
 # 为图例创建一个 ScalarMappable 对象
-norm = colors.Normalize(vmin=gdf_points_new['star_rating'].min(), vmax=gdf_points_new['star_rating'].max())
+norm = colors.Normalize(vmin=gdf_points_new['heat_level'].min(), vmax=gdf_points_new['heat_level'].max())
 sm1 = plt.cm.ScalarMappable(cmap='viridis', norm=norm)
 sm1.set_array([])
 
@@ -595,9 +617,9 @@ plt.show()
 
 ```{python}
 # 筛选出满足条件的点
-red_points = gdf_points_new[(gdf_points_new['star_rating'] == 5) & (gdf_points_new['satisfaction_level'] == 1)]
-red_points_all = gdf_points_new[(gdf_points_new['star_rating'] == 5)]
-cyan_points = gdf_points_new[(gdf_points_new['star_rating'] == 1) & (gdf_points_new['satisfaction_level'] == 5)]
+red_points = gdf_points_new[(gdf_points_new['heat_level'] == 5) & (gdf_points_new['satisfaction_level'] == 1)]
+red_points_all = gdf_points_new[(gdf_points_new['heat_level'] == 5)]
+cyan_points = gdf_points_new[(gdf_points_new['heat_level'] == 1) & (gdf_points_new['satisfaction_level'] == 5)]
 cyan_points_all = gdf_points_new[(gdf_points_new['satisfaction_level'] == 5)]
 
 # Create the figure and subplots
@@ -641,13 +663,6 @@ plt.show()
 ```
 
 ```{python}
-# print(red_points.count())
-# print(red_points_all.count())
-# print(cyan_points.count())
-# print(cyan_points_all.count())
-```
-
-```{python}
 # red_points['price'] = red_points['price'].replace('[\$,]', '', regex=True).astype(float)
 # print(red_points['price'].describe())
 
@@ -662,39 +677,351 @@ plt.show()
 ```
 
 ```{python}
-# # 筛选出满足条件的点
-# red_points = gdf_points_new[(gdf_points_new['star_rating'] == 5) & (gdf_points_new['satisfaction_level'] == 1)]
-# cyan_points = gdf_points_new[(gdf_points_new['star_rating'] == 1) & (gdf_points_new['satisfaction_level'] == 5)]
+# red_points = gdf_points_new[(gdf_points_new['heat_level'] == 5) & (gdf_points_new['satisfaction_level'] == 1)]
+# cyan_points = gdf_points_new[(gdf_points_new['heat_level'] == 1) & (gdf_points_new['satisfaction_level'] == 5)]
 
-# # 创建画布
 # fig, ax = plt.subplots(figsize=(10, 10))
 
-# # 绘制点
 # gdf_boroughs.plot(ax=ax, color='white', edgecolor='lightgrey')
 # red_points.plot(ax=ax, color='red', markersize=10, label='Heat: 5, Quality: 1')
 # cyan_points.plot(ax=ax, color='cyan', markersize=10, label='Heat: 1, Quality: 5')
 
-# # 设置标题
 # ax.set_title('Special Points in London')
 
-# # 调整显示范围
 # xmin, ymin, xmax, ymax = gdf_points_new.total_bounds
 # ax.set_xlim([xmin, xmax])
 # ax.set_ylim([ymin, ymax])
 
-# # 添加图例
 # ax.legend()
 
-# # 显示结果
 # plt.show()
 ```
 
 ```{python}
 # print(gdf_quality['satisfaction_level'].describe())
+# print(gdf_points_new['heat_level'].describe())
 ```
 
 ```{python}
-# print(gdf_points_new['star_rating'].describe())
+# Switch
+```
+
+```{python}
+# data_2.info()
+```
+
+```{python}
+# # ！！！！！！由于后面存在代码运行时间过长，因此在此将不需要的部分注释掉，如需要运行，需要十分钟以上的时间。
+
+# from sklearn.preprocessing import OneHotEncoder
+# from sklearn.feature_extraction.text import TfidfVectorizer
+# from sklearn.feature_extraction.text import CountVectorizer
+# from sklearn.decomposition import LatentDirichletAllocation
+```
+
+```{python}
+# import nltk
+# import spacy
+# from nltk.corpus import wordnet as wn
+# from nltk.stem.wordnet import WordNetLemmatizer
+# from nltk.corpus import stopwords
+# from nltk.tokenize import word_tokenize, sent_tokenize
+# from nltk.tokenize.toktok import ToktokTokenizer
+# from nltk.stem.porter import PorterStemmer
+# from nltk.stem.snowball import SnowballStemmer
+# from nltk import ngrams, FreqDist
+
+# lemmatizer = WordNetLemmatizer()
+# tokenizer = ToktokTokenizer()
+```
+
+```{python}
+# # the method in the practical-07
+# import urllib.request
+# host  = 'https://orca.casa.ucl.ac.uk'
+# turl  = f'{host}/~jreades/__textual__.py'
+# tdirs = os.path.join('textual')
+# tpath = os.path.join(tdirs,'__init__.py')
+
+# if not os.path.exists(tpath):
+#     os.makedirs(tdirs, exist_ok=True)
+#     urllib.request.urlretrieve(turl, tpath)
+```
+
+```{python}
+# from textual import *;
+```
+
+```{python}
+# # select the houses which is 5 in heat_level and satisfaction_level
+# heat5_house = data_2[data_2['heat_level'] == 5]
+# satisfaction5_house = data_2[data_2['satisfaction_level'] == 5]
+# analyzeheat5 = heat5_house
+
+# # select the houses which is 4 in heat_level and satisfaction_level
+# heat4_house = data_2[data_2['heat_level'] == 4]
+# satisfaction4_house = data_2[data_2['satisfaction_level'] == 4]
+# analyzeheat4 = heat4_house
+
+# # select the houses which is 3 in heat_level and satisfaction_level
+# heat3_house = data_2[data_2['heat_level'] == 3]
+# satisfaction3_house = data_2[data_2['satisfaction_level'] == 3]
+# analyzeheat3 = heat3_house
+
+# # select the houses which is 2 in heat_level and satisfaction_level
+# heat2_house = data_2[data_2['heat_level'] == 2]
+# satisfaction2_house = data_2[data_2['satisfaction_level'] == 2]
+# analyzeheat2 = heat2_house
+
+# # select the houses which is 1 in heat_level and satisfaction_level
+# heat1_house = data_2[data_2['heat_level'] == 1]
+# satisfaction1_house = data_2[data_2['satisfaction_level'] == 1]
+# analyzeheat1 = heat1_house
+
+# highHeat_lowSat = data_2[(data_2['satisfaction_level']) == 1 & (data_2['heat_level'] == 5)]
+# lowHeat_highSat = data_2[(data_2['satisfaction_level'])== 5 & (data_2['heat_level'] == 1)]
+```
+
+```{python}
+# heatAll = [heat1_house,heat2_house,heat3_house,heat4_house,heat5_house]
+# satisfactionAll = [satisfaction1_house,satisfaction2_house,satisfaction3_house,satisfaction4_house,satisfaction5_house]
+# extreme = [highHeat_lowSat, lowHeat_highSat]
+```
+
+```{python}
+# # 从本代码块至最后一格出现结果需要时间很长
+
+# # Calculate the average of host_response_rate
+# host_response_rate = []
+# for i in heatAll:
+#     j = i.dropna(subset=['host_response_rate'])
+#     mean = j['host_response_rate'].str.rstrip('%').astype('float') / 100.0
+#     host_response_rate.append(mean.mean())
+
+# for i in satisfactionAll:
+#     j = i.dropna(subset=['host_response_rate'])
+#     mean = j['host_response_rate'].str.rstrip('%').astype('float') / 100.0
+#     host_response_rate.append(mean.mean())
+    
+# for i in extreme:
+#     j = i.dropna(subset=['host_response_rate'])
+#     mean = j['host_response_rate'].str.rstrip('%').astype('float') / 100.0
+#     host_response_rate.append(mean.mean())
+```
+
+```{python}
+# # Calculate the average of host_acceptance_rate
+# host_acceptance_rate = []
+# for i in heatAll:
+#     j = i.dropna(subset=['host_acceptance_rate'])
+#     mean = j['host_acceptance_rate'].str.rstrip('%').astype('float') / 100.0
+#     host_acceptance_rate.append(mean.mean())
+
+# for i in satisfactionAll:
+#     j = i.dropna(subset=['host_acceptance_rate'])
+#     mean = j['host_acceptance_rate'].str.rstrip('%').astype('float') / 100.0
+#     host_acceptance_rate.append(mean.mean())
+
+# for i in extreme:
+#     j = i.dropna(subset=['host_acceptance_rate'])
+#     mean = j['host_acceptance_rate'].str.rstrip('%').astype('float') / 100.0
+#     host_acceptance_rate.append(mean.mean())
+```
+
+```{python}
+# # Calculate the average length of neighborhood_overview text
+# neighborhood_overview = []
+# for i in heatAll:
+#     j = i.dropna(subset=['neighborhood_overview'])
+#     j['neighborhood_overview'] = j.neighborhood_overview.apply(normalise_document, remove_digits=True)
+#     textlist = j.neighborhood_overview.tolist()
+#     total = 0
+#     for i in textlist:
+#         total = total + len(i)
+#     averge = total/len(textlist)
+#     neighborhood_overview.append(averge)
+
+# for i in satisfactionAll:
+#     j = i.dropna(subset=['neighborhood_overview'])
+#     j['neighborhood_overview'] = j.neighborhood_overview.apply(normalise_document, remove_digits=True)
+#     textlist = j.neighborhood_overview.tolist()
+#     total = 0
+#     for i in textlist:
+#         total = total + len(i)
+#     averge = total/len(textlist)
+#     neighborhood_overview.append(averge)
+
+# for i in extreme:
+#     j = i.dropna(subset=['neighborhood_overview'])
+#     j['neighborhood_overview'] = j.neighborhood_overview.apply(normalise_document, remove_digits=True)
+#     textlist = j.neighborhood_overview.tolist()
+#     total = 0
+#     for i in textlist:
+#         total = total + len(i)
+#     averge = total/len(textlist)
+#     neighborhood_overview.append(averge)
+```
+
+```{python}
+# # Calculate the average length of description text
+# description = []
+# for i in heatAll:
+#     j = i.dropna(subset=['description'])
+#     j['description'] = j.description.apply(normalise_document, remove_digits=True)
+#     textlist = j.description.tolist()
+#     total = 0
+#     for i in textlist:
+#         total = total + len(i)
+#     averge = total/len(textlist)
+#     description.append(averge)
+
+# for i in satisfactionAll:
+#     j = i.dropna(subset=['description'])
+#     j['description'] = j.description.apply(normalise_document, remove_digits=True)
+#     textlist = j.description.tolist()
+#     total = 0
+#     for i in textlist:
+#         total = total + len(i)
+#     averge = total/len(textlist)
+#     description.append(averge)
+
+# for i in extreme:
+#     j = i.dropna(subset=['description'])
+#     j['description'] = j.description.apply(normalise_document, remove_digits=True)
+#     textlist = j.description.tolist()
+#     total = 0
+#     for i in textlist:
+#         total = total + len(i)
+#     averge = total/len(textlist)
+#     description.append(averge)
+```
+
+```{python}
+#| editable: true
+#| slideshow: {slide_type: ''}
+# # Calculate the average length of host_about text
+# host_about = []
+# for i in heatAll:
+#     j = i.dropna(subset=['host_about'])
+#     j['host_about'] = j.host_about.apply(normalise_document, remove_digits=True)
+#     textlist = j.host_about.tolist()
+#     total = 0
+#     for i in textlist:
+#         total = total + len(i)
+#     averge = total/len(textlist)
+#     host_about.append(averge)
+
+# for i in satisfactionAll:
+#     j = i.dropna(subset=['host_about'])
+#     j['host_about'] = j.host_about.apply(normalise_document, remove_digits=True)
+#     textlist = j.host_about.tolist()
+#     total = 0
+#     for i in textlist:
+#         total = total + len(i)
+#     averge = total/len(textlist)
+#     host_about.append(averge)
+
+# for i in extreme:
+#     j = i.dropna(subset=['host_about'])
+#     j['host_about'] = j.host_about.apply(normalise_document, remove_digits=True)
+#     textlist = j.host_about.tolist()
+#     total = 0
+#     for i in textlist:
+#         total = total + len(i)
+#     averge = total/len(textlist)
+#     host_about.append(averge)
+```
+
+```{python}
+# # Calculate the average of price
+# price= []
+# for i in heatAll:
+#     i['price'] = i['price'].str.replace('$','', regex=False).str.replace(',','', regex=False).astype('float')
+#     mean =  i.price.mean()
+#     price.append(mean)
+
+# for i in satisfactionAll:
+#     i['price'] = i['price'].str.replace('$','', regex=False).str.replace(',','', regex=False).astype('float')
+#     mean =  i.price.mean()
+#     price.append(mean)
+
+# for i in extreme:
+#     i['price'] = i['price'].str.replace('$','', regex=False).str.replace(',','', regex=False).astype('float')
+#     mean =  i.price.mean()
+#     price.append(mean)
+```
+
+```{python}
+#| editable: true
+#| slideshow: {slide_type: ''}
+# # Creating df table
+# row_list = ['heat1','heat2','heat3','heat4','heat5',
+#             'sat1','sat2','sat3','sat4','sat5',
+#             'heat5_sat1', 'heat1_sat5']
+
+# dir1 = { ' ': row_list,
+#         'price(£)': price,
+#         'host_response_rate(%)': host_response_rate,
+#         'host_acceptance_rate(%)': host_acceptance_rate
+#       }
+
+# dir2 = { ' ': row_list,
+#         'neighborhood_overview': neighborhood_overview,
+#         'description': description,
+#         'host_about': host_about
+#       }
+```
+
+```{python}
+# # format DataFrame1
+# formatted_df1 = pd.DataFrame(dir1)
+
+# # 格式化列
+# formatted_df1['price(£)'] = formatted_df1['price(£)'].round(2)
+
+# # 将小数转换为百分数并保留两位小数
+# formatted_df1['host_response_rate(%)'] = (formatted_df1['host_response_rate(%)'] * 100).round(2)
+# formatted_df1['host_acceptance_rate(%)'] = (formatted_df1['host_acceptance_rate(%)'] * 100).round(2)
+
+# # format DataFrame2
+# formatted_df2 = pd.DataFrame(dir2)
+
+# # 将列转换为整数
+# formatted_df2['neighborhood_overview'] = formatted_df2['neighborhood_overview'].astype(int)
+# formatted_df2['description'] = formatted_df2['description'].astype(int)
+# formatted_df2['host_about'] = formatted_df2['host_about'].astype(int)
+```
+
+```{python}
+# formatted_df1.to_csv('formatted_df1.csv', index=False)
+# formatted_df2.to_csv('formatted_df2.csv', index=False)
+```
+
+```{python}
+df_savetime1 = pd.read_csv('formatted_df1.csv')
+df_savetime2 = pd.read_csv('formatted_df2.csv')
+```
+
+```{python}
+# 设置Styler来格式化表格
+df_styled1 = df_savetime1.style.format({
+    'price(£)': "{:.2f}",
+    'host_response_rate(%)': "{:.2f}",
+    'host_acceptance_rate(%)': "{:.2f}",
+}).set_properties(**{'text-align': 'center'})
+
+df_styled1.hide(axis='index')
+```
+
+```{python}
+# 设置Styler来格式化表格
+df_styled2 = df_savetime2.style.format({
+    'neighborhood_overview': "{:.0f}",
+    'description': "{:.0f}",
+    'host_about': "{:.0f}"
+}).set_properties(**{'text-align': 'center'})
+
+df_styled2.hide(axis='index')
 ```
 
 ## 6. With reference to the data (*i.e.* using numbers, figures, maps, and descriptive statistics), what does an analysis of Hosts and Listing types suggest about the nature of Airbnb lets in London? 
