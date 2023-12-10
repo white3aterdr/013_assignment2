@@ -697,6 +697,300 @@ plt.show()
 # print(gdf_points_new['star_rating'].describe())
 ```
 
+```{python}
+# 
+```
+
+```{python}
+data_2.info()
+```
+
+```{python}
+from sklearn.preprocessing import OneHotEncoder # We don't use this but I point out where you *could*
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.decomposition import LatentDirichletAllocation
+```
+
+```{python}
+import nltk
+import spacy
+from nltk.corpus import wordnet as wn
+from nltk.stem.wordnet import WordNetLemmatizer
+
+from nltk.corpus import stopwords
+
+from nltk.tokenize import word_tokenize, sent_tokenize
+from nltk.tokenize.toktok import ToktokTokenizer
+
+from nltk.stem.porter import PorterStemmer
+from nltk.stem.snowball import SnowballStemmer
+
+from nltk import ngrams, FreqDist
+
+lemmatizer = WordNetLemmatizer()
+tokenizer = ToktokTokenizer()
+```
+
+```{python}
+# the method in the practical-07
+import urllib.request
+host  = 'https://orca.casa.ucl.ac.uk'
+turl  = f'{host}/~jreades/__textual__.py'
+tdirs = os.path.join('textual')
+tpath = os.path.join(tdirs,'__init__.py')
+
+if not os.path.exists(tpath):
+    os.makedirs(tdirs, exist_ok=True)
+    urllib.request.urlretrieve(turl, tpath)
+```
+
+```{python}
+from textual import *
+```
+
+```{python}
+# select the houses which is 5 in star_rating and satisfaction_level
+Rank5_house = data_2[data_2['star_rating'] == 5]
+satisfaction5_house = data_2[data_2['satisfaction_level'] == 5]
+#normalise the text
+#Rank5_house['description'] = Rank5_house.description.apply(normalise_document, remove_digits=True)
+analyzeRank5 = Rank5_house
+
+# select the houses which is 4 in star_rating and satisfaction_level
+Rank4_house = data_2[data_2['star_rating'] == 4]
+satisfaction4_house = data_2[data_2['satisfaction_level'] == 4]
+#normalise the text
+#Rank4_house['description'] = Rank4_house.description.apply(normalise_document, remove_digits=True)
+analyzeRank4 = Rank4_house
+
+# select the houses which is 3 in star_rating and satisfaction_level
+Rank3_house = data_2[data_2['star_rating'] == 3]
+satisfaction3_house = data_2[data_2['satisfaction_level'] == 3]
+#normalise the text
+#Rank3_house['description'] = Rank3_house.description.apply(normalise_document, remove_digits=True)
+analyzeRank3 = Rank3_house
+
+# select the houses which is 2 in star_rating and satisfaction_level
+Rank2_house = data_2[data_2['star_rating'] == 2]
+satisfaction2_house = data_2[data_2['satisfaction_level'] == 2]
+#normalise the text
+#Rank2_house['description'] = Rank2_house.description.apply(normalise_document, remove_digits=True)
+analyzeRank2 = Rank2_house
+
+# select the houses which is 1 in star_rating and satisfaction_level
+Rank1_house = data_2[data_2['star_rating'] == 1]
+satisfaction1_house = data_2[data_2['satisfaction_level'] == 1]
+#normalise the text
+#Rank1_house['description'] = Rank1_house.description.apply(normalise_document, remove_digits=True)
+analyzeRank1 = Rank1_house
+
+
+highRank_lowSat = data_2[(data_2['satisfaction_level']) == 1 & (data_2['star_rating'] == 5)]
+lowRank_highSat = data_2[(data_2['satisfaction_level'])== 5 & (data_2['star_rating'] == 1)]
+```
+
+```{python}
+RankAll = [Rank1_house,Rank2_house,Rank3_house,Rank4_house,Rank5_house]
+satisfactionAll = [satisfaction1_house,satisfaction2_house,satisfaction3_house,satisfaction4_house,satisfaction5_house]
+extreme = [highRank_lowSat, lowRank_highSat]
+```
+
+```{python}
+#Calculate the average of host_response_rate
+host_response_rate = []
+for i in RankAll:
+    j = i.dropna(subset=['host_response_rate'])
+    mean = j['host_response_rate'].str.rstrip('%').astype('float') / 100.0
+    host_response_rate.append(mean.mean())
+
+for i in satisfactionAll:
+    j = i.dropna(subset=['host_response_rate'])
+    mean = j['host_response_rate'].str.rstrip('%').astype('float') / 100.0
+    host_response_rate.append(mean.mean())
+    
+for i in extreme:
+    j = i.dropna(subset=['host_response_rate'])
+    mean = j['host_response_rate'].str.rstrip('%').astype('float') / 100.0
+    host_response_rate.append(mean.mean())
+
+```
+
+```{python}
+#Calculate the average of host_acceptance_rate
+host_acceptance_rate = []
+for i in RankAll:
+    j = i.dropna(subset=['host_acceptance_rate'])
+    mean = j['host_acceptance_rate'].str.rstrip('%').astype('float') / 100.0
+    host_acceptance_rate.append(mean.mean())
+
+for i in satisfactionAll:
+    j = i.dropna(subset=['host_acceptance_rate'])
+    mean = j['host_acceptance_rate'].str.rstrip('%').astype('float') / 100.0
+    host_acceptance_rate.append(mean.mean())
+
+for i in extreme:
+    j = i.dropna(subset=['host_acceptance_rate'])
+    mean = j['host_acceptance_rate'].str.rstrip('%').astype('float') / 100.0
+    host_acceptance_rate.append(mean.mean())
+
+    
+```
+
+```{python}
+# Calculate the average length of neighborhood_overview text
+neighborhood_overview = []
+for i in RankAll:
+    j = i.dropna(subset=['neighborhood_overview'])
+    j['neighborhood_overview'] = j.neighborhood_overview.apply(normalise_document, remove_digits=True)
+    textlist = j.neighborhood_overview.tolist()
+    total = 0
+    for i in textlist:
+        total = total + len(i)
+    averge = total/len(textlist)
+    neighborhood_overview.append(averge)
+
+for i in satisfactionAll:
+    j = i.dropna(subset=['neighborhood_overview'])
+    j['neighborhood_overview'] = j.neighborhood_overview.apply(normalise_document, remove_digits=True)
+    textlist = j.neighborhood_overview.tolist()
+    total = 0
+    for i in textlist:
+        total = total + len(i)
+    averge = total/len(textlist)
+    neighborhood_overview.append(averge)
+
+for i in extreme:
+    j = i.dropna(subset=['neighborhood_overview'])
+    j['neighborhood_overview'] = j.neighborhood_overview.apply(normalise_document, remove_digits=True)
+    textlist = j.neighborhood_overview.tolist()
+    total = 0
+    for i in textlist:
+        total = total + len(i)
+    averge = total/len(textlist)
+    neighborhood_overview.append(averge)
+
+```
+
+```{python}
+# Calculate the average length of description text
+description = []
+for i in RankAll:
+    j = i.dropna(subset=['description'])
+    j['description'] = j.description.apply(normalise_document, remove_digits=True)
+    textlist = j.description.tolist()
+    total = 0
+    for i in textlist:
+        total = total + len(i)
+    averge = total/len(textlist)
+    description.append(averge)
+
+for i in satisfactionAll:
+    j = i.dropna(subset=['description'])
+    j['description'] = j.description.apply(normalise_document, remove_digits=True)
+    textlist = j.description.tolist()
+    total = 0
+    for i in textlist:
+        total = total + len(i)
+    averge = total/len(textlist)
+    description.append(averge)
+
+for i in extreme:
+    j = i.dropna(subset=['description'])
+    j['description'] = j.description.apply(normalise_document, remove_digits=True)
+    textlist = j.description.tolist()
+    total = 0
+    for i in textlist:
+        total = total + len(i)
+    averge = total/len(textlist)
+    description.append(averge)
+```
+
+```{python}
+#| editable: true
+#| slideshow: {slide_type: ''}
+# Calculate the average length of host_about text
+host_about = []
+for i in RankAll:
+    j = i.dropna(subset=['host_about'])
+    j['host_about'] = j.host_about.apply(normalise_document, remove_digits=True)
+    textlist = j.host_about.tolist()
+    total = 0
+    for i in textlist:
+        total = total + len(i)
+    averge = total/len(textlist)
+    host_about.append(averge)
+
+for i in satisfactionAll:
+    j = i.dropna(subset=['host_about'])
+    j['host_about'] = j.host_about.apply(normalise_document, remove_digits=True)
+    textlist = j.host_about.tolist()
+    total = 0
+    for i in textlist:
+        total = total + len(i)
+    averge = total/len(textlist)
+    host_about.append(averge)
+
+for i in extreme:
+    j = i.dropna(subset=['host_about'])
+    j['host_about'] = j.host_about.apply(normalise_document, remove_digits=True)
+    textlist = j.host_about.tolist()
+    total = 0
+    for i in textlist:
+        total = total + len(i)
+    averge = total/len(textlist)
+    host_about.append(averge)
+```
+
+```{python}
+#Calculate the average of price
+price= []
+for i in RankAll:
+    i['price'] = i['price'].str.replace('$','', regex=False).str.replace(',','', regex=False).astype('float')
+    mean =  i.price.mean()
+    price.append(mean)
+
+for i in satisfactionAll:
+    i['price'] = i['price'].str.replace('$','', regex=False).str.replace(',','', regex=False).astype('float')
+    mean =  i.price.mean()
+    price.append(mean)
+
+for i in extreme:
+    i['price'] = i['price'].str.replace('$','', regex=False).str.replace(',','', regex=False).astype('float')
+    mean =  i.price.mean()
+    price.append(mean)
+```
+
+```{python}
+#| editable: true
+#| slideshow: {slide_type: ''}
+row_list = ['Rank1_house','Rank2_house','Rank3_house','Rank4_house','Rank5_house',
+            'satisfaction1_house','satisfaction2_house','satisfaction3_house','satisfaction4_house','satisfaction5_house',
+           'highRank_lowSat', 'lowRank_highSat']
+
+dir = {'list_name': row_list,
+        'host_response_rate_mean': host_response_rate,
+        'host_acceptance_rate_mean': host_acceptance_rate,
+        'neighborhood_overview_mean': neighborhood_overview,
+        'description_mean': description,
+        'host_about_mean': host_about,
+        'price_mean': price}
+```
+
+```{python}
+result_df = pd.DataFrame(dir)
+```
+
+```{python}
+result_df.set_index('list_name', inplace=True)
+```
+
+```{python}
+#| editable: true
+#| slideshow: {slide_type: ''}
+result_df
+```
+
 ## 6. With reference to the data (*i.e.* using numbers, figures, maps, and descriptive statistics), what does an analysis of Hosts and Listing types suggest about the nature of Airbnb lets in London? 
 
 
