@@ -1,0 +1,228 @@
+---
+bibliography: test.bib
+csl: harvard-cite-them-right.csl
+title: Rookie Programmers Group Project
+nocite: '@*'
+execute:
+  echo: false
+format:
+  html:
+    theme:
+      - minty
+      - css/web.scss
+    code-copy: true
+    code-link: true
+    toc: true
+    toc-title: On this page
+    toc-depth: 2
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+  pdf:
+    include-in-header:
+      text: |
+        \addtokomafont{disposition}{\rmfamily}
+    mainfont: Spectral
+    sansfont: Roboto
+    monofont: JetBrainsMono-Regular
+    papersize: a4
+    geometry:
+      - top=25mm
+      - left=40mm
+      - right=30mm
+      - bottom=25mm
+      - heightrounded
+    toc: false
+    number-sections: false
+    colorlinks: true
+    highlight-style: github
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .qmd
+      format_name: quarto
+      format_version: '1.0'
+      jupytext_version: 1.15.2
+  kernelspec:
+    display_name: Python 3 (ipykernel)
+    language: python
+    name: python3
+---
+
+## Declaration of Authorship {.unnumbered .unlisted}
+
+We, Rookie Programmers, confirm that the work presented in this assessment is our own. Where information has been derived from other sources, we confirm that this has been indicated in the work. Where a Large Language Model such as ChatGPT has been used we confirm that we have made its contribution to the final submission clear.
+
+Date: 2023/12/11
+
+Student Numbers: 23148316/23100260/23049577/23202303
+
+## Brief Group Reflection
+
+| What Went Well | What Was Challenging |
+| -------------- | -------------------- |
+| Great collaboration and division of labor within the group | It was difficult to select topics and find other data sets. In the end, we chose to only use the listing.csv data, and it was difficult to evaluate whether a topic was suitable before completing it. |
+| The pace of work is good and it is basically completed about a week ahead of schedule. | Initially we hoped to analyze keywords, but did not get results, and we did not have the sophisticated technology of NLP. We adjusted the direction, tried to analyze other aspects, and obtained some conclusions, but we did not meet expectations. |
+
+## Priorities for Feedback
+
+Are there any areas on which you would appreciate more detailed feedback if we're able to offer it?
+
+There are two aspects.
+
+We attempted to develop two rating criteria in our analysis, which required defining weights, for which there are few references. In the urban planning industry, when similar situations are involved, definitions are sometimes defined by inviting experts to score. So for group work like ours, can we first find reasonable indicators based on current conditions, and adopt similar methods to optimize in the future if necessary and conditional?
+
+In our analysis, we initially wanted to use NLP to analyze subjective descriptive text. However, in practice, we found that only using keyword frequency analysis cannot draw effective conclusions, and the skills we have mastered are not enough to complete it. Although we have adjusted the research direction later, what should we do if in some cases, a research does not reach a conclusion of obvious significance in the end? What kind of evaluation will it get?
+
+```{=html}
+<style type="text/css">
+.duedate {
+  border: dotted 2px red; 
+  background-color: rgb(255, 235, 235);
+  height: 50px;
+  line-height: 50px;
+  margin-left: 40px;
+  margin-right: 40px
+  margin-top: 10px;
+  margin-bottom: 10px;
+  color: rgb(150,100,100);
+  text-align: center;
+}
+</style>
+```
+
+{{< pagebreak >}}
+
+# Response to Questions
+
+## 1. Who collected the data?
+
+Insideairbnb website data[@noauthor_home_nodate] were collected by the Inside Airbnb project, with contributions from a variety of collaborators and partners.
+
+The raw data were compiled from the Airbnb[@noauthor_airbnb_nodate-1], which was collected by the company Airbnb, Inc.
+
+
+## 2. Why did they collect it?
+
+On the insideairbnb website [@noauthor_about_nodate], they write:
+
+>"We work towards a vision where communities are empowered with data and information to understand, decide and control the role of renting residential homes to tourists".
+
+As for the company Airbnb, three considerations may arise:
+  
+- Operational aspect: To assist users in making informed decisions.[@labazkin_exploring_2019] 
+
+- Company aspect: Data collection plays a crucial role in analyzing Airbnb's operational performance. With the gathered data, Airbnb can fine-tune its operational strategies.
+
+- Legal aspect: In compliance with diverse regulatory requirements, Airbnb must furnish information to the respective authorities as necessary.
+
+
+## 3. How was the data collected?  
+
+Insideairbnb collected data, which was a snapshot at a particular time, from Airbnb platform.
+
+The data collected by Airbnb can be classified along two dimensions: the data source and the method of generation. 
+
+#### From host: 
+
+Objective data. From hosts but can be verified by images or qualifications. User-provided GPS position can also automatically retrieve data. (Listing data: latitude, property_type, etc. Host data: host_name, host_location, etc.)c.
+
+Produced during platform operation. Platform activity generates these data, but host behaviour determines their content. (Host_acceptance_rate, host_response_rate, etc.)c.
+
+- Subjective data. These data were provided by the host anwere y subjective descriptiond its content and tendency depend on the host's own preferences(D description, neighborhood_overview, host_about, et)c.
+
+#### From guest: 
+
+- Objective data. When guest register an Airbnb account, they need to provide personal informati.o(N name, conta_t detals, payme_t information, et)c.
+
+- Generated durinplatform e operatirmThe platform created these data, but guest behaviour determines their compositionst(N number_of_reviews, first_review, et)c.
+
+- Subjective data. These data were provided by the guest, depends st preferenc (R review_scores_accuracs, comments, et)c.
+
+#### From platform: 
+
+- Generated durinplatform operationrm. These data were automatically generat,nb ane user's behavior has no impact on it(H host_id, host_url, reviewer_id, et)
+
+- Platform does not proactively provide objective or subjective data.
+
+
+## 4. How does the method of collection impact the completeness and/or accuracy of its representation of the process it seeks to study, and what wider issues does this raise?
+
+#### Completeness:
+
+- Insideairbnb data is a snapshot of the Airbnb platform, it cannot reflect changing information.
+
+- Regarding the original data on Airbnb, if the collection relies on voluntary submissions (such as reviews from guests), it might not be possible to gather data from all relevant individuals. Self-selection bias could lead to incomplete data.
+
+#### Accuracy: 
+
+- Objective data is mostly accurate, but Airbnb anonymizes listing location. Location will be 0-150 metres cheaper on the map or listing. Airbnb anonymizes listings in the same building, making them appear "fragmented".
+
+- Data generated by the platform might be accurate but can also be subject to technical errors. Data tampering, such as phoney reviews or inflated booking figures, may introduce deceptive listing evaluation.
+
+- The correctness and completeness of subjective information depend on the provider's skill and desire to deliver precise details. Even for listing descriptions, hosts with diverse professional experience may present them differently. Hosts with less expertise may overlook benefits or guest concerns. However, expert landlords can highlight desirable characteristics, while deceitful landlords may hide faults. Guests have varying histories and judgement criteria, therefore listing ratings are more subjective. One user may overlook a detail that another values, skewing the evaluation.
+
+
+## 5. What ethical considerations does the use of this data raise? 
+
+#### Privacy and Security: 
+
+- Privacy concerns: Individual data, including names, contact information, and payment details, is sensitive. The collection, storage, and use of this data raises privacy concerns. Users should be informed about what data is collected and how it will be used and give consent, especially for identifying data. News sources say some landlords dislike the platform's photo demand.
+
+- Data Security and Usage Control: Preventing unauthorised access and breaches is essential. Strong security measures to protect user data from cyberattacks are ethical. It's also crucial to avoid misusing data obtained for one purpose without user consent. Avoid disclosing or using data for unknown purposes.
+
+#### Bias and Discrimination: 
+
+- The data collection and analysis may inadvertently create bias or overlook certain groups. Such as the feelings of groups lack willingness to comment.
+
+- Data collected from user reviews or host descriptions may reflect personal biases. This could lead to racial, gender, age, and other prejudice. Identifying and mitigating biases is essential for ethical data use.
+
+- The Matthew effect brought about by the popularity mechanism, such as Superhosts. This inequality may result in popular listings being in short supply, while unpopular listings remain uninterested.
+
+#### Distortion and Misleading: 
+
+- Host capabilities may cause photo or description distortions, misleading listing status. This mismatch can make it hard for guests to assess the listing's quality.
+
+- Fake photographs and reviews can deceive users during intentional deception. This can also lead to inaccurate data analysis. The platform must build up detection, elimination, and punishment systems.
+
+#### Impact on Communities: 
+
+- When utilizing data for descriptions of communities, the produced data only offer a partial reflection of the status of certain communities, not encompassing all aspects. However, the release of these findings can have diverse impacts on the community, including external evaluations, rent fluctuations, effects on residents' lives, and socioeconomic stratification. 
+
+## 6. With reference to the data (*i.e.* using numbers, figures, maps, and descriptive statistics), what does an analysis of Hosts and Listing types suggest about the nature of Airbnb lets in London? 
+
+## 7. Drawing on your previous answers, and supporting your response with evidence (e.g. figures, maps, and statistical analysis/models), how *could* this data set be used to inform the regulation of Short-Term Lets (STL) in London? 
+
+Combining the previous classifications, we further analyze the listings to find factors related to hosts or listings that lead to inconsistencies or even reversals between popularity and satisfaction. We selected six items set by hosts to analyze the impact of host behavior. Figure 3 shows the relationship between the mean values of different items and different levels of listings. In addition to the mean values, the median or extremes also reflect similar trends. For clarity, only the mean values are plotted here.
+
+Figure 3
+
+#### Figure 3-a:
+
+The average price of Heat1_sat5 listings is the highest, indicating that price is a significant factor hindering people from placing orders. The average price of high-popularity and low-satisfaction listings is the lowest, indicating that many people are attracted by low prices, even if they are dissatisence.
+
+#### Figure 3-b:
+
+The mean reply rates for different levels are all above 90%, with little difference. The relationship between satisfaction and reply rate is not obvious. But the lower the ac_eptance rate, the higher the satisfaction. This indicates that on the Airbnb platform, guests and hosts are mutually selecti"picky" ve, an guesthave better listingsoperties.
+
+#### Figure 3-c:
+
+The analysis here focuses on the lengths of three descriptive texts. The description of the listing is the longest, then the surroundings, and lastly, the host's self-introduction. There is not a significant change in these lengths between different groups, but interestingly, the higher the popularity, the shorter the self-introduction. May this mean that long with shorter self-introductions are less popular? Conclusions are difficult to draw based solely on length.
+
+Focus on analyzing two extreme groups. In Heat5_sat1, both the description and self-introduction lengths are significantly smaller than Heat1_sat5, indicating that hosts with more descriptions are more likely to achieve high satisfaction. However, the description of the surroundings is the opposite; perhaps the high popularity location deserves more description on sIn fact, drawing effective conclusions through text length analysis is difficult. And using high-frequency keywords does not lead to effective conclusions as well. For example, the top three keywords are "room," "space," and "London." Due to technological limitations, NLP analysis will be considered for future work.
+
+#### Conclusion
+
+Among the factors affecting the "mismatch of popularity and satisfaction," we found that host behavior has a considerable impact. There may be significant differences between "professional hosts" and "hosts who meet the original intention of Airbnb" in terms of relevant abilities and awareness.
+
+By identifying such mismatches, the Airbnb platform can optimize its supervision mechanism. 
+
+- Penalties can be imposed on hosts who rely on unreal descriptions for marketing.
+
+- Further optimize the way listings are created, providing more multiple-choice questions rather than subjective questions.
+
+-  In addition to spreading legal knowledge, host strategy tutorials or photo-taking advice can also be provideder government supervision.
+
+
+## References
+
