@@ -347,7 +347,7 @@ selected_boroughs = [
 in_selected_borough = data.apply(lambda x: any(borough.contains(x.geometry) for borough in gdf_boroughs[gdf_boroughs['NAME'].isin(selected_boroughs)].geometry), axis=1)
 
 # Create two side-by-side maps
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 10), facecolor='white') 
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5), facecolor='white') 
 
 # Plot the left map: Unfiltered data
 gdf_boroughs.plot(ax=ax1, color='white', edgecolor='grey', linewidth=0.6)
@@ -369,16 +369,12 @@ plt.show()
 
 For listings in this area, we have established two sets of rating standards for "popularity" and "satisfaction" to discover their distribution patterns.
 
-- Popularity = 1 * 30_day_booking_rate + 10 * average_daily_review_count
-
-                + 0.5 * superhost_or_not
+- Popularity = 1 * 30_day_booking_rate + 10 * average_daily_review_count + 0.5 * superhost_or_not
 
 
 The availability within 30 days usually reflects the number of nights not booked and can calculate the 30-day booking rate. However, listings with availability of 0 within 60 days need to be excluded because the longer unavailable days are usually set by the host as non-bookable. The average daily review count can be calculated based on the number of reviews and the the days between the first and last reviews. A superhost is an identification by the platform for high-popularity hosts. We set the weighting coefficient based on the concept of review rate, combined with insideairbnb's assumptions [@noauthor_about_nodate]. Afterward, for listings that meet the conditions, they are evenly divided into five levels according to the score, with level 1 having the lowest popularity score and level 5 having the highest.
 
-- Satisfaction = 1.5 * accuracy + 2 * cleanliness + 1 * check in
-
-                  + 1 * communication + 0.5 * location + 1 * value
+- Satisfaction = 1.5 * accuracy + 2 * cleanliness + 1 * check in + 1 * communication + 0.5 * location + 1 * value
 
 Satisfaction weight refers to [@labazkin_exploring_2019], and we use the overall score and item scores to be reweighted, giving higher weight to the items reflecting the listing itself. Similarly, a classification of 1-5 levels is carried out.
 
@@ -676,7 +672,7 @@ cyan_points.plot(ax=axs[1], color='dodgerblue', markersize=3)
 
 # Set the titles for both subplots
 axs[0].set_title('Figure 2-c  "Heat5" with highlighted "Satisfaction1"')
-axs[1].set_title('Figure 2-d  "Heat1" with highlighted "Satisfaction5"')
+axs[1].set_title('Figure 2-d  "Satisfaction5" with highlighted "Heat1"')
 
 # Determine the combined bounds of both datasets
 xmin = min(red_points.total_bounds[0], cyan_points.total_bounds[0])
@@ -1072,7 +1068,7 @@ df1 = df_savetime1.copy()
 df1.set_index('Level', inplace=True)
 
 # Create a bar chart
-ax = df1[['price(£)']].plot(kind='bar', figsize=(14, 6), color=['#a8dadc'])
+ax = df1[['price(£)']].plot(kind='bar', figsize=(8, 5), color=['#a8dadc'])
 
 # Set title and labels
 ax.set_title('Figure 3-a  Price', fontsize=16)
@@ -1098,7 +1094,7 @@ df2 = df_savetime1.copy()
 df2.set_index('Level', inplace=True)
 
 # Create a bar chart
-ax = df2[['host_response_rate(%)', 'host_acceptance_rate(%)']].plot(kind='bar', figsize=(14, 6), color=['#0077b6', '#90e0ef'])
+ax = df2[['host_response_rate(%)', 'host_acceptance_rate(%)']].plot(kind='bar', figsize=(8, 5), color=['#0077b6', '#90e0ef'])
 
 # Set title and labels
 ax.set_title('Figure 3-b  Response rate and acceptance rate', fontsize=16)
@@ -1124,7 +1120,7 @@ df3 = df_savetime2.copy()
 df3.set_index('Level', inplace=True)
 
 # Create a bar chart
-ax = df3.plot(kind='bar', figsize=(14, 6), color=['#023e8a', '#00b4d8', '#ade8f4'])
+ax = df3.plot(kind='bar', figsize=(8, 5), color=['#023e8a', '#00b4d8', '#ade8f4'])
 
 # Set title and labels
 ax.set_title('Figure 3-c  The length of three types of descriptive text', fontsize=16)
@@ -1135,7 +1131,7 @@ ax.set_ylabel('Count', fontsize=12)
 plt.xticks(rotation=45)
 
 # Set the range of the y-axis
-ax.set_ylim(0, 650)
+ax.set_ylim(0, 750)
 
 # Display the legend
 ax.legend(title='Legend')
@@ -1173,4 +1169,3 @@ The previous analysis also shows that hotels with low scores and low prices are 
 This may require the intervention of government regulations. For example, certain defects must be clearly described, and the description of certain items must correspond to facility standards. However, it should also be noted that Airbnb is more like a second-hand market compared to the B2C in the hotel industry. Their individuality and freedom must be protected. The regulations should serve as a safety-net mechanism. This ensures that the quality of each listing is predictable and provides guests with a personalized experience.
 
 ## References
-
